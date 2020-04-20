@@ -2,10 +2,7 @@ part of 'basenode.dart';
 
 class ServerNode extends BaseServerNode {
   ServerNode(
-      {@required this.name,
-      this.host,
-      this.port = 8084,
-      this.verbose = false})
+      {@required this.name, this.host, this.port = 8084, this.verbose = false})
       : assert(name != null) {
     if (Platform.isAndroid || Platform.isIOS) {
       if (host == null) {
@@ -37,9 +34,10 @@ abstract class BaseServerNode with BaseNode {
   }
 
   List<ConnectedClientNode> get clientsConnected => _clients;
-  
+
   Future<void> discoverNodes() async => _broadcastForDiscovery();
-  Future<void> _initServerNode(String host, {@required bool start}) async => await _initNode(host, true, start: start);
+  Future<void> _initServerNode(String host, {@required bool start}) async =>
+      await _initNode(host, true, start: start);
 
   bool hasClient(String name) {
     for (final client in _clients) {
@@ -60,6 +58,4 @@ abstract class BaseServerNode with BaseNode {
     }
     return addr;
   }
-
-  
 }

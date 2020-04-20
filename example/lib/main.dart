@@ -107,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void serverToClient(String clientName) async {
     final String client = server.clientUri(clientName);
-    await server.sendData(dataToSend, client);    
+    await server.sendData(dataToSend, client);
   }
 
   void disposeClient() {
@@ -215,9 +215,8 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(dataRecieved),
             RaisedButton(
               child: Text("Dispose $dropdownValue"),
-              onPressed: () => dropdownValue == "Server"
-                  ? disposeServer()
-                  : disposeClient(),
+              onPressed: () =>
+                  dropdownValue == "Server" ? disposeServer() : disposeClient(),
             ),
           ],
         ),

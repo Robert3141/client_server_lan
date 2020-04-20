@@ -2,24 +2,23 @@ part of 'basenode.dart';
 
 class ClientNode extends BaseClientNode {
   ClientNode(
-    {
-      @required this.name,
-      this.host,
-      this.port = 8084,
-      this.verbose = false
-    } 
-  ) : assert (name != null) {
-    if (Platform.isAndroid ||Platform.isIOS) {
+      {@required this.name, this.host, this.port = 8084, this.verbose = false})
+      : assert(name != null) {
+    if (Platform.isAndroid || Platform.isIOS) {
       if (host == null) {
         throw ArgumentError("Please provide a host");
       }
     }
   }
 
-  @override String name;
-  @override String host;
-  @override int port;
-  @override bool verbose;
+  @override
+  String name;
+  @override
+  String host;
+  @override
+  int port;
+  @override
+  bool verbose;
 
   Future<void> init({String ip, bool start = true}) async {
     ip ??= host;
@@ -34,5 +33,6 @@ abstract class BaseClientNode with BaseNode {
   }
 
   ConnectedClientNode get serverDetails => _server;
-  Future<void> _initClientNode(String host, {@required bool start}) async => await _initNode(host, false, start: start);
+  Future<void> _initClientNode(String host, {@required bool start}) async =>
+      await _initNode(host, false, start: start);
 }

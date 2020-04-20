@@ -33,7 +33,6 @@ abstract class BaseNode {
   final Completer _readyCompleter = Completer<void>();
   final StreamController<String> _dataResponce =
       StreamController<String>.broadcast();
-  
 
   Future get onReady => _readyCompleter.future;
   bool get isRunning => _isRunning;
