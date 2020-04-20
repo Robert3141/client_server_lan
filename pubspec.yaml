@@ -1,8 +1,7 @@
 name: client_server_lan
 description: A simple to use LAN communication package
 version: 0.0.1
-author:
-homepage:
+homepage: https://github.com/Robert3141/client_server_lan
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
