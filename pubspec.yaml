@@ -1,5 +1,5 @@
 name: client_server_lan
-description: A simple to use LAN communication package
+description: A simple to use LAN communication package. A Server and a Client can be setup. Then the server broadcasts itself and connects to any listening clients. Data can then be transferred between each. The server and client can then disconnect when ready.
 version: 0.0.1
 homepage: https://github.com/Robert3141/client_server_lan
 

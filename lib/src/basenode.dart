@@ -57,7 +57,7 @@ abstract class BaseNode {
     _isRunning = true;
     await _initForDiscovery();
     if (!_isServer) {
-      _listenForDiscovery();
+      await _listenForDiscovery();
     }
     if (verbose) {
       _.ok("Node is ready");
