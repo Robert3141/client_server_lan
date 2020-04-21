@@ -15,7 +15,7 @@ import 'package:client_server_lan/client_server_lan.dart';
 void startServer() async {
     String ip = await Wifi.ip;
     server = ServerNode(
-      name: "Server name",
+      name: "Server",
       verbose: true,
       host: ip,
       port: 8085,
@@ -25,20 +25,21 @@ void startServer() async {
     setState(() {
       serverStatus = "Server ready on ${server.host}:${server.port}";
     });
-    server.dataResponse.listen((dynamic data) {
+    server.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.toString();
+        dataRecieved = data.payload;
       });
     });
-}
+  }
 ```
 Start a Client Node
 
 ```dart
 void startClient() async {
+    dropdownEnabled = false;
     String ip = await Wifi.ip;
     client = ClientNode(
-      name: "Client Name",
+      name: "Client Node",
       verbose: true,
       host: ip,
       port: 8085,
@@ -48,12 +49,12 @@ void startClient() async {
     setState(() {
       clientStatus = "Client ready on ${client.host}:${client.port}";
     });
-    client.dataResponse.listen((dynamic data) {
+    client.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.toString();
+        dataRecieved = data.payload;
       });
     });
-}
+  }
 ```
 Server scan for Clients
 
@@ -67,7 +68,7 @@ void findClients() async {
         clientIPs += "id=${s.name},IP=${s.address}\n";
       });
     }
-}
+  }
 ```
 
 ### Transfer Data
@@ -76,8 +77,8 @@ Transfer from Client to Server
 
 ```dart
 void clientToServer() async {
-    await client.sendData(dataToSend, client.serverDetails.address);
-}
+    await client.sendData("userInfo",dataToSend, client.serverDetails.address);
+  }
 ```
 
 Transfer from Server to Client
@@ -85,6 +86,6 @@ Transfer from Server to Client
 ```dart
 void serverToClient(String clientName) async {
     final String client = server.clientUri(clientName);
-    await server.sendData(dataToSend, client);    
-}
+    await server.sendData("userInfo",dataToSend, client);
+  }
 ```

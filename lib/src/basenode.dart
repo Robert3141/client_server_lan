@@ -31,18 +31,20 @@ abstract class BaseNode {
   final List<ConnectedClientNode> _clients = <ConnectedClientNode>[];
   final Dio _dio = Dio(BaseOptions(connectTimeout: 5000, receiveTimeout: 3000));
   final Completer _readyCompleter = Completer<void>();
-  final StreamController<String> _dataResponce =
-      StreamController<String>.broadcast();
+  final StreamController<DataPacket> _dataResponce =
+      StreamController<DataPacket>.broadcast();
 
-  /// The way to access the status of the HTTP Listener    
+  /// The way to access the status of the HTTP Listener
   void status() => iso.status();
 
   /// Future for when the Node is fully set up
   Future get onReady => _readyCompleter.future;
+
   /// Boolean to tell whether the Node is running
   bool get isRunning => _isRunning;
+
   /// The data stream to listen on for incoming data sent from devices on the LAN
-  Stream<String> get dataResponse => _dataResponce.stream;
+  Stream<DataPacket> get dataResponse => _dataResponce.stream;
 
   Future<void> _initNode(String _host, bool isServer,
       {@required bool start}) async {
@@ -66,16 +68,24 @@ abstract class BaseNode {
     }
   }
 
-  Future<void> sendData(dynamic data, String to) async {
+  Future<void> sendData(String title, dynamic data, String to) async {
     assert(to != null);
     assert(data != null);
     if (verbose) {
       _.smallArrowOut("Sending data $data to $to");
     }
-    final response = await _sendData(data, to, "/cmd/response");
+    final response = await _sendData(title, data, to, "/cmd/response");
     if (response == null || response.statusCode != HttpStatus.ok) {
       final ecode = response?.statusCode ?? "no response";
       _.warning("Error sending the data response: $ecode");
+    }
+  }
+
+  Future<void> _sendInfo(String title, String to) async {
+    final response = await _sendData(title, null, to, "/cmd/response");
+    if (response == null || response.statusCode != HttpStatus.ok) {
+      final ecode = response?.statusCode ?? "no response";
+      _.warning("Error sending the info response: $ecode");
     }
   }
 
@@ -103,24 +113,42 @@ abstract class BaseNode {
 
   void _listenToIso() {
     iso.logs.listen((dynamic data) async {
-      //print("PAYLOAD RECIEVED $data");
+      if (data is Map<String, dynamic>) {
+        data = DataPacket.fromJson(data);
+        if (data.title == "client_connect") {
+          final client = ConnectedClientNode(
+              name: data.name,
+              address: "${data.host}:${data.port}",
+              lastSeen: DateTime.now());
+          _clients.add(client);
+          if (verbose) {
+            _.state(
+                "Client ${data.name} connected at ${data.host}:${data.port}");
+          }
+        } else {
+          if (data.payload != "null") {
+            _dataResponce.sink.add(data);
+          } else if (verbose) {
+            print("Empty packet recieved from ${data.host}:${data.port}");
+          }
+        }
+      }
       if (data is String) {
-        //verify data
-        _dataResponce.sink.add(data.toString());
-        //print("PAYLOAD IS STRING");
-      } else if (data["title"] == "client_connect"){
-        final client = ConnectedClientNode(
-            name: data["name"].toString(),
-            address: "${data["host"]}:${data["port"]}",
-            lastSeen: DateTime.now());
-        _clients.add(client);
+        //data is message about server
         if (verbose) {
-          _.state(
-              "Client ${client.name} connected at ${data["host"]}:${data["port"]}");
+          print(data);
+        }
+      } else if (data is DataPacket) {
+        if (data.payload != null) {
+          _dataResponce.sink.add(data);
+        } else if (verbose) {
+          print("Empty packet recieved from ${data.host}:${data.port}");
         }
       } else {
-        //if data is sent as json but not client connecting
-        _dataResponce.sink.add(json.encode(data).toString());
+        if (verbose) {
+          _.error("Data received type ${data.runtimeType} not packet: " +
+              data.toString());
+        }
       }
     });
   }
@@ -139,17 +167,15 @@ abstract class BaseNode {
     }
   }
 
-  Future<Response> _sendData(dynamic data, String to, String endPoint) async {
-    assert(data != null);
+  Future<Response> _sendData(
+      String title, dynamic data, String to, String endPoint) async {
     assert(to != null);
     final uri = "http://$to$endPoint";
-    //print("URI=$uri");
     Response response;
+    final packet = DataPacket(
+        host: host, port: port, name: name, title: title, payload: data);
     try {
-      //final dynamic data = //_dataToJson(_data,"$host:$port");
-      //print("POSTING TO DIO");
-      response = await _dio.post<dynamic>(uri, data: data);
-      //print("POSTED TO DIO");
+      response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
         _.error(e, "http error with response");
@@ -167,7 +193,9 @@ abstract class BaseNode {
     assert(host != null);
     assert(_isServer);
     await _socketReady.future;
-    final payload = '{"host":"$host", "port": "$port", "name": "$name", "title": "client_connect"}';
+    final payload =
+        DataPacket(host: host, port: port, name: name, title: "client_connect")
+            .encodeToString();
     final data = utf8.encode(payload);
     String broadcastAddr;
     final l = host.split(".");

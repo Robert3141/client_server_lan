@@ -14,12 +14,15 @@ class ServerNode extends BaseServerNode {
   /// The name of the node on the network
   @override
   String name;
+
   /// The IP address of the device
   @override
   String host;
+
   /// The Port to use for communication
   @override
   int port;
+
   /// Whether to debug print outputs of what's happening
   @override
   bool verbose;

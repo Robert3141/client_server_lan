@@ -14,12 +14,15 @@ class ClientNode extends BaseClientNode {
   /// The name of the node on the network
   @override
   String name;
+
   /// The IP address of the device
   @override
   String host;
+
   /// The Port to use for communication
   @override
   int port;
+
   /// Whether to debug print outputs of what's happening
   @override
   bool verbose;
@@ -41,7 +44,7 @@ abstract class BaseClientNode with BaseNode {
 
   /// Provides information about the server if one is connected
   ConnectedClientNode get serverDetails => _server;
-  
+
   Future<void> _initClientNode(String host, {@required bool start}) async {
     await _initNode(host, false, start: start);
     await _listenForDiscovery();
@@ -72,13 +75,8 @@ abstract class BaseClientNode with BaseNode {
         print(
             "Recieved connection request from Client ${data["host"]}:${data["port"]}");
       }
-      final payload = <String, String>{
-        "host": "$host",
-        "port": "$port",
-        "name": "$name"
-      };
       final String addr = "${data["host"]}:${data["port"]}";
-      await sendData(payload, addr);
+      await _sendInfo("client_connect", addr);
     });
-  }  
+  }
 }

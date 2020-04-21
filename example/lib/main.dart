@@ -96,12 +96,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void clientToServer() async {
-    await client.sendData("userInfo",dataToSend, client.serverDetails.address);
+    await client.sendData("userInfo", dataToSend, client.serverDetails.address);
   }
 
   void serverToClient(String clientName) async {
     final String client = server.clientUri(clientName);
-    await server.sendData("userInfo",dataToSend, client);
+    await server.sendData("userInfo", dataToSend, client);
   }
 
   void disposeClient() {
