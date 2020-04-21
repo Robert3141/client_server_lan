@@ -29,8 +29,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   wifi: ^0.1.5
   client_server_lan:
-    git:
-      url: https://github.com/Robert3141/client_server_lan.git
+    path: ../
   cupertino_icons: ^0.1.3
   isohttpd: ^0.4.0
 

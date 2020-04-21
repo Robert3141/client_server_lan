@@ -59,9 +59,9 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       serverStatus = "Server ready on ${server.host}:${server.port}";
     });
-    server.dataResponse.listen((dynamic data) {
+    server.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.toString();
+        dataRecieved = data.payload;
       });
     });
   }
@@ -83,9 +83,9 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       clientStatus = "Client ready on ${client.host}:${client.port}";
     });
-    client.dataResponse.listen((dynamic data) {
+    client.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.toString();
+        dataRecieved = data.payload;
       });
     });
   }
@@ -102,12 +102,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void clientToServer() async {
-    await client.sendData(dataToSend, client.serverDetails.address);
+    await client.sendData("userInfo",dataToSend, client.serverDetails.address);
   }
 
   void serverToClient(String clientName) async {
     final String client = server.clientUri(clientName);
-    await server.sendData(dataToSend, client);
+    await server.sendData("userInfo",dataToSend, client);
   }
 
   void disposeClient() {

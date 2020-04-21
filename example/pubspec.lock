@@ -46,12 +46,10 @@ packages:
   client_server_lan:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: "1fb1e45b2a8aa1f5f4d82c249249fbeb41199cd8"
-      url: "https://github.com/Robert3141/client_server_lan.git"
-    source: git
-    version: "0.0.1"
+      path: ".."
+      relative: true
+    source: path
+    version: "0.1.1"
   collection:
     dependency: transitive
     description:
