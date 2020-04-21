@@ -1,4 +1,4 @@
-## [1.0.1] -- 21/04/2020
+## [1.0.1] - 21/04/2020
 
 * Minor changes to code formatting
 
