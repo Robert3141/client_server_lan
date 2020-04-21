@@ -34,13 +34,15 @@ abstract class BaseNode {
   final StreamController<String> _dataResponce =
       StreamController<String>.broadcast();
 
-  Future get onReady => _readyCompleter.future;
-  bool get isRunning => _isRunning;
-  Stream<String> get dataResponse => _dataResponce.stream;
-
-  /*void start() => iso.start();
-  void stop() => iso.stop();*/
+  /// The way to access the status of the HTTP Listener    
   void status() => iso.status();
+
+  /// Future for when the Node is fully set up
+  Future get onReady => _readyCompleter.future;
+  /// Boolean to tell whether the Node is running
+  bool get isRunning => _isRunning;
+  /// The data stream to listen on for incoming data sent from devices on the LAN
+  Stream<String> get dataResponse => _dataResponce.stream;
 
   Future<void> _initNode(String _host, bool isServer,
       {@required bool start}) async {
@@ -77,6 +79,7 @@ abstract class BaseNode {
     }
   }
 
+  /// To be run when the HTTP Server is no longer required
   void dispose() {
     _dataResponce.close();
     _socket.close();
@@ -90,8 +93,8 @@ abstract class BaseNode {
     this.host = host;
     this.port = port;
     final routes = <IsoRoute>[];
-    routes.add(IsoRoute(handler: sendHandler, path: "/cmd"));
-    routes.add(IsoRoute(handler: responseHandler, path: "/cmd/response"));
+    routes.add(IsoRoute(handler: _sendHandler, path: "/cmd"));
+    routes.add(IsoRoute(handler: _responseHandler, path: "/cmd/response"));
     final router = IsoRouter(routes);
     //run isolate
     iso = IsoHttpd(host: host, router: router);

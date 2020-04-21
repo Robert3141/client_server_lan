@@ -11,15 +11,20 @@ class ClientNode extends BaseClientNode {
     }
   }
 
+  /// The name of the node on the network
   @override
   String name;
+  /// The IP address of the device
   @override
   String host;
+  /// The Port to use for communication
   @override
   int port;
+  /// Whether to debug print outputs of what's happening
   @override
   bool verbose;
 
+  /// Used to setup the Node ready for use
   Future<void> init({String ip, bool start = true}) async {
     ip ??= host;
     ip ??= await getHost();
@@ -34,6 +39,7 @@ abstract class BaseClientNode with BaseNode {
 
   ConnectedClientNode _server;
 
+  /// Provides information about the server if one is connected
   ConnectedClientNode get serverDetails => _server;
   
   Future<void> _initClientNode(String host, {@required bool start}) async {

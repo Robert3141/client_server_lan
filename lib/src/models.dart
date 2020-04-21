@@ -19,7 +19,7 @@ class ConnectedClientNode {
   DateTime lastSeen;
 }
 
-Future<HttpResponse> sendHandler(HttpRequest request, IsoLogger log) async {
+Future<HttpResponse> _sendHandler(HttpRequest request, IsoLogger log) async {
   print("Begin sendHandler");
   final content = await utf8.decoder.bind(request).join();
   final dynamic c = json.decode(content);
@@ -29,7 +29,7 @@ Future<HttpResponse> sendHandler(HttpRequest request, IsoLogger log) async {
   return request.response;
 }
 
-Future<HttpResponse> responseHandler(HttpRequest request, IsoLogger log) async {
+Future<HttpResponse> _responseHandler(HttpRequest request, IsoLogger log) async {
   print("BEGIN responseHandler");
   final content = await utf8.decoder.bind(request).join();
   print("content received");
