@@ -22,7 +22,7 @@ abstract class BaseNode {
   IsoHttpd iso;
   bool verbose;
   RawDatagramSocket _socket;
-  ConnectedClientNode _server;
+
   bool _isServer;
   int _socketPort;
   bool _isRunning = false;
@@ -38,8 +38,8 @@ abstract class BaseNode {
   bool get isRunning => _isRunning;
   Stream<String> get dataResponse => _dataResponce.stream;
 
-  void start() => iso.start();
-  void stop() => iso.stop();
+  /*void start() => iso.start();
+  void stop() => iso.stop();*/
   void status() => iso.status();
 
   Future<void> _initNode(String _host, bool isServer,
@@ -56,13 +56,12 @@ abstract class BaseNode {
     await iso.onServerStarted;
     _isRunning = true;
     await _initForDiscovery();
-    if (!_isServer) {
-      await _listenForDiscovery();
-    }
-    if (verbose) {
+    if (verbose && _isServer) {
       _.ok("Node is ready");
     }
-    _readyCompleter.complete();
+    if (_isServer) {
+      _readyCompleter.complete();
+    }
   }
 
   Future<void> sendData(dynamic data, String to) async {
@@ -106,7 +105,7 @@ abstract class BaseNode {
         //verify data
         _dataResponce.sink.add(data.toString());
         //print("PAYLOAD IS STRING");
-      } else {
+      } else if (data["title"] == "client_connect"){
         final client = ConnectedClientNode(
             name: data["name"].toString(),
             address: "${data["host"]}:${data["port"]}",
@@ -116,6 +115,9 @@ abstract class BaseNode {
           _.state(
               "Client ${client.name} connected at ${data["host"]}:${data["port"]}");
         }
+      } else {
+        //if data is sent as json but not client connecting
+        _dataResponce.sink.add(json.encode(data).toString());
       }
     });
   }
@@ -132,37 +134,6 @@ abstract class BaseNode {
     if (!_socketReady.isCompleted) {
       _socketReady.complete();
     }
-  }
-
-  Future<void> _listenForDiscovery() async {
-    assert(_socket != null);
-    await _socketReady.future;
-    if (verbose) {
-      print("Listening on socket ${_socket.address.host}:$_socketPort");
-    }
-    _socket.listen((RawSocketEvent e) async {
-      final d = _socket.receive();
-      if (d == null) {
-        return;
-      }
-      final message = utf8.decode(d.data).trim();
-      final dynamic data = json.decode(message);
-      _server = ConnectedClientNode(
-          address: "${data["host"]}:${data["port"]}",
-          name: data["name"].toString(),
-          lastSeen: DateTime.now());
-      if (verbose) {
-        print(
-            "Recieved connection request from Client ${data["host"]}:${data["port"]}");
-      }
-      final payload = <String, String>{
-        "host": "$host",
-        "port": "$port",
-        "name": "$name"
-      };
-      final String addr = "${data["host"]}:${data["port"]}";
-      await sendData(payload, addr);
-    });
   }
 
   Future<Response> _sendData(dynamic data, String to, String endPoint) async {
@@ -193,7 +164,7 @@ abstract class BaseNode {
     assert(host != null);
     assert(_isServer);
     await _socketReady.future;
-    final payload = '{"host":"$host", "port": "$port", "name": "$name"}';
+    final payload = '{"host":"$host", "port": "$port", "name": "$name", "title": "client_connect"}';
     final data = utf8.encode(payload);
     String broadcastAddr;
     final l = host.split(".");

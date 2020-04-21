@@ -32,7 +32,47 @@ abstract class BaseClientNode with BaseNode {
     _isServer = false;
   }
 
+  ConnectedClientNode _server;
+
   ConnectedClientNode get serverDetails => _server;
-  Future<void> _initClientNode(String host, {@required bool start}) async =>
-      await _initNode(host, false, start: start);
+  
+  Future<void> _initClientNode(String host, {@required bool start}) async {
+    await _initNode(host, false, start: start);
+    await _listenForDiscovery();
+    if (verbose) {
+      _.ok("Node is ready");
+    }
+    _readyCompleter.complete();
+  }
+
+  Future<void> _listenForDiscovery() async {
+    assert(_socket != null);
+    await _socketReady.future;
+    if (verbose) {
+      print("Listening on socket ${_socket.address.host}:$_socketPort");
+    }
+    _socket.listen((RawSocketEvent e) async {
+      final d = _socket.receive();
+      if (d == null) {
+        return;
+      }
+      final message = utf8.decode(d.data).trim();
+      final dynamic data = json.decode(message);
+      _server = ConnectedClientNode(
+          address: "${data["host"]}:${data["port"]}",
+          name: data["name"].toString(),
+          lastSeen: DateTime.now());
+      if (verbose) {
+        print(
+            "Recieved connection request from Client ${data["host"]}:${data["port"]}");
+      }
+      final payload = <String, String>{
+        "host": "$host",
+        "port": "$port",
+        "name": "$name"
+      };
+      final String addr = "${data["host"]}:${data["port"]}";
+      await sendData(payload, addr);
+    });
+  }  
 }
