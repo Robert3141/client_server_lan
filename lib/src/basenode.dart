@@ -13,7 +13,17 @@ part 'client.dart';
 part 'models.dart';
 part 'host.dart';
 
+//errors
 const _ = EmoDebug();
+
+class _e {
+  static const String nodeReady = "Node is ready";
+  static const String httpResponse = "http error with response";
+  static const String httpNoResponse = "http error with no response";
+  static const String noResponse = "no response";
+}
+
+const String _suffix = "/cmd";
 
 abstract class BaseNode {
   String name;
@@ -60,12 +70,6 @@ abstract class BaseNode {
     await iso.onServerStarted;
     _isRunning = true;
     await _initForDiscovery();
-    if (verbose && _isServer) {
-      _.ok("Node is ready");
-    }
-    if (_isServer) {
-      _readyCompleter.complete();
-    }
   }
 
   Future<void> sendData(String title, dynamic data, String to) async {
@@ -74,17 +78,17 @@ abstract class BaseNode {
     if (verbose) {
       _.smallArrowOut("Sending data $data to $to");
     }
-    final response = await _sendData(title, data, to, "/cmd/response");
+    final response = await _sendData(title, data, to, _suffix);
     if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? "no response";
+      final ecode = response?.statusCode ?? _e.noResponse;
       _.warning("Error sending the data response: $ecode");
     }
   }
 
   Future<void> _sendInfo(String title, String to) async {
-    final response = await _sendData(title, null, to, "/cmd/response");
+    final response = await _sendData(title, null, to, _suffix);
     if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? "no response";
+      final ecode = response?.statusCode ?? _e.noResponse;
       _.warning("Error sending the info response: $ecode");
     }
   }
@@ -103,8 +107,7 @@ abstract class BaseNode {
     this.host = host;
     this.port = port;
     final routes = <IsoRoute>[];
-    routes.add(IsoRoute(handler: _sendHandler, path: "/cmd"));
-    routes.add(IsoRoute(handler: _responseHandler, path: "/cmd/response"));
+    routes.add(IsoRoute(handler: _responseHandler, path: _suffix));
     final router = IsoRouter(routes);
     //run isolate
     iso = IsoHttpd(host: host, router: router);
@@ -178,32 +181,15 @@ abstract class BaseNode {
       response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
-        _.error(e, "http error with response");
+        _.error(e, _e.httpResponse);
         return response;
       } else {
-        _.error(e, "http error with no response");
+        _.error(e, _e.httpNoResponse);
       }
     } catch (e) {
       rethrow;
     }
     return response;
-  }
-
-  Future<void> _broadcastForDiscovery() async {
-    assert(host != null);
-    assert(_isServer);
-    await _socketReady.future;
-    final payload =
-        DataPacket(host: host, port: port, name: name, title: "client_connect")
-            .encodeToString();
-    final data = utf8.encode(payload);
-    String broadcastAddr;
-    final l = host.split(".");
-    broadcastAddr = "${l[0]}.${l[1]}.${l[2]}.255";
-    if (verbose) {
-      print("Broadcasting to $broadcastAddr: $payload");
-    }
-    _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
 
   int _randomSocketPort() {

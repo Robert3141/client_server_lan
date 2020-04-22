@@ -121,6 +121,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void dispose() {
+    dropdownEnabled
+        ? dropdownValue == "Server" ? disposeServer() : disposeClient()
+        : print("Disposing");
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -164,7 +172,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       RaisedButton(
                         child: Text("Scan Clients"),
-                        onPressed: () => findClients(),
+                        onPressed: () => dropdownEnabled ? null : findClients(),
                       ),
                       Text(clientIPs),
                       TextField(
@@ -202,15 +210,20 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             RaisedButton(
               child: Text("Send Data"),
-              onPressed: () => dropdownValue == "Server"
-                  ? serverToClient(clientToSend)
-                  : clientToServer(),
+              onPressed: () => dropdownEnabled
+                  ? null
+                  : dropdownValue == "Server"
+                      ? serverToClient(clientToSend)
+                      : clientToServer(),
             ),
             Text(dataRecieved),
             RaisedButton(
               child: Text("Dispose $dropdownValue"),
-              onPressed: () =>
-                  dropdownValue == "Server" ? disposeServer() : disposeClient(),
+              onPressed: () => dropdownEnabled
+                  ? null
+                  : dropdownValue == "Server"
+                      ? disposeServer()
+                      : disposeClient(),
             ),
           ],
         ),

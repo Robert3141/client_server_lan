@@ -45,8 +45,14 @@ abstract class BaseServerNode with BaseNode {
 
   /// Used to scan for client Nodes
   Future<void> discoverNodes() async => _broadcastForDiscovery();
-  Future<void> _initServerNode(String host, {@required bool start}) async =>
-      await _initNode(host, true, start: start);
+
+  Future<void> _initServerNode(String host, {@required bool start}) async {
+    await _initNode(host, true, start: start);
+    if (verbose) {
+      _.ok(_e.nodeReady);
+    }
+    _readyCompleter.complete();
+  }
 
   /// retrurns whether the client of name has been discovered
   bool hasClient(String name) {
@@ -68,5 +74,22 @@ abstract class BaseServerNode with BaseNode {
       }
     }
     return addr;
+  }
+
+  Future<void> _broadcastForDiscovery() async {
+    assert(host != null);
+    assert(_isServer);
+    await _socketReady.future;
+    final payload =
+        DataPacket(host: host, port: port, name: name, title: "client_connect")
+            .encodeToString();
+    final data = utf8.encode(payload);
+    String broadcastAddr;
+    final l = host.split(".");
+    broadcastAddr = "${l[0]}.${l[1]}.${l[2]}.255";
+    if (verbose) {
+      print("Broadcasting to $broadcastAddr: $payload");
+    }
+    _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
 }

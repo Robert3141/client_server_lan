@@ -55,14 +55,6 @@ class DataPacket {
       '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload"}';
 }
 
-Future<HttpResponse> _sendHandler(HttpRequest request, IsoLogger log) async {
-  final content = await utf8.decoder.bind(request).join();
-  final dynamic c = json.decode(content);
-  log.push(c);
-  request.response.statusCode = HttpStatus.ok;
-  return request.response;
-}
-
 Future<HttpResponse> _responseHandler(
     HttpRequest request, IsoLogger log) async {
   final content = await utf8.decoder.bind(request).join();
