@@ -72,35 +72,13 @@ abstract class BaseNode {
     await _initForDiscovery();
   }
 
-  Future<void> sendData(String title, dynamic data, String to) async {
-    assert(to != null);
-    assert(data != null);
-    if (verbose) {
-      _.smallArrowOut("Sending data $data to $to");
-    }
-    final response = await _sendData(title, data, to, _suffix);
-    if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? _e.noResponse;
-      _.warning("Error sending the data response: $ecode");
-    }
-  }
-
-  Future<void> _sendInfo(String title, String to) async {
-    final response = await _sendData(title, null, to, _suffix);
-    if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? _e.noResponse;
-      _.warning("Error sending the info response: $ecode");
-    }
-  }
-
-  /// To be run when the HTTP Server is no longer required
-  void dispose() {
-    _dataResponce.close();
-    _socket.close();
-    iso.kill();
-    if (verbose) {
-      print(_isServer ? "Server Disposed" : "Client Disposed");
-    }
+  int _randomSocketPort() {
+    return 9104;
+    /*
+    const int min = 9100;
+    const int max = 9999;
+    final n = Random().nextInt((max - min).toInt());
+    return min + n;*/
   }
 
   IsoRouter _initRoutes() {
@@ -170,6 +148,27 @@ abstract class BaseNode {
     }
   }
 
+  Future<void> sendData(String title, dynamic data, String to) async {
+    assert(to != null);
+    assert(data != null);
+    if (verbose) {
+      _.smallArrowOut("Sending data $data to $to");
+    }
+    final response = await _sendData(title, data, to, _suffix);
+    if (response == null || response.statusCode != HttpStatus.ok) {
+      final ecode = response?.statusCode ?? _e.noResponse;
+      _.warning("Error sending the data response: $ecode");
+    }
+  }
+
+  Future<void> _sendInfo(String title, String to) async {
+    final response = await _sendData(title, null, to, _suffix);
+    if (response == null || response.statusCode != HttpStatus.ok) {
+      final ecode = response?.statusCode ?? _e.noResponse;
+      _.warning("Error sending the info response: $ecode");
+    }
+  }
+
   Future<Response> _sendData(
       String title, dynamic data, String to, String endPoint) async {
     assert(to != null);
@@ -192,12 +191,13 @@ abstract class BaseNode {
     return response;
   }
 
-  int _randomSocketPort() {
-    return 9104;
-    /*
-    const int min = 9100;
-    const int max = 9999;
-    final n = Random().nextInt((max - min).toInt());
-    return min + n;*/
+  /// To be run when the HTTP Server is no longer required
+  void dispose() {
+    _dataResponce.close();
+    _socket.close();
+    iso.kill();
+    if (verbose) {
+      print(_isServer ? "Server Disposed" : "Client Disposed");
+    }
   }
 }
