@@ -27,7 +27,7 @@ const String _suffix = "/cmd";
 abstract class _BaseNode {
   String _name;
   String _host;
-  int _port;  
+  int _port;
   IsoHttpd _iso;
   RawDatagramSocket _socket;
   bool _isServer;
@@ -132,7 +132,7 @@ abstract class _BaseNode {
           print("Received: $data");
         }
       } else if (data is DataPacket) {
-        if (data.payload != null && data.payload!= "null") {
+        if (data.payload != null && data.payload != "null") {
           _.data("Recieved Packet: ${data.name} : ${data.payload}");
           _dataResponce.sink.add(data);
         } else if (verbose) {
