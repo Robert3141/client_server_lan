@@ -49,7 +49,7 @@ abstract class BaseClientNode with BaseNode {
     await _initNode(host, false, start: start);
     await _listenForDiscovery();
     if (verbose) {
-      _.ok("Node is ready");
+      _.ok(_e.nodeReady);
     }
     _readyCompleter.complete();
   }

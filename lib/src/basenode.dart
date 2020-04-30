@@ -13,13 +13,28 @@ part 'client.dart';
 part 'models.dart';
 part 'host.dart';
 
+//errors
 const _ = EmoDebug();
 
+class _e {
+  static const String nodeReady = "Node is ready";
+  static const String httpResponse = "http error with response";
+  static const String httpNoResponse = "http error with no response";
+  static const String noResponse = "no response";
+}
+
+const String _suffix = "/cmd";
+
 abstract class BaseNode {
+  /// The String chosen as the name of the Node
   String name;
+  /// The IP adress of the Node
   String host;
+  /// The Port of the Node
   int port;
+  /// The http server used for data transmission
   IsoHttpd iso;
+  /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
   RawDatagramSocket _socket;
 
@@ -60,51 +75,22 @@ abstract class BaseNode {
     await iso.onServerStarted;
     _isRunning = true;
     await _initForDiscovery();
-    if (verbose && _isServer) {
-      _.ok("Node is ready");
-    }
-    if (_isServer) {
-      _readyCompleter.complete();
-    }
   }
 
-  Future<void> sendData(String title, dynamic data, String to) async {
-    assert(to != null);
-    assert(data != null);
-    if (verbose) {
-      _.smallArrowOut("Sending data $data to $to");
-    }
-    final response = await _sendData(title, data, to, "/cmd/response");
-    if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? "no response";
-      _.warning("Error sending the data response: $ecode");
-    }
-  }
-
-  Future<void> _sendInfo(String title, String to) async {
-    final response = await _sendData(title, null, to, "/cmd/response");
-    if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? "no response";
-      _.warning("Error sending the info response: $ecode");
-    }
-  }
-
-  /// To be run when the HTTP Server is no longer required
-  void dispose() {
-    _dataResponce.close();
-    _socket.close();
-    iso.kill();
-    if (verbose) {
-      print(_isServer ? "Server Disposed" : "Client Disposed");
-    }
+  int _randomSocketPort() {
+    return 9104;
+    /*
+    const int min = 9100;
+    const int max = 9999;
+    final n = Random().nextInt((max - min).toInt());
+    return min + n;*/
   }
 
   IsoRouter _initRoutes() {
     this.host = host;
     this.port = port;
     final routes = <IsoRoute>[];
-    routes.add(IsoRoute(handler: _sendHandler, path: "/cmd"));
-    routes.add(IsoRoute(handler: _responseHandler, path: "/cmd/response"));
+    routes.add(IsoRoute(handler: _responseHandler, path: _suffix));
     final router = IsoRouter(routes);
     //run isolate
     iso = IsoHttpd(host: host, router: router);
@@ -167,6 +153,28 @@ abstract class BaseNode {
     }
   }
 
+  /// The method to transmit to another Node on the network. The data is transferred over LAN.
+  Future<void> sendData(String title, dynamic data, String to) async {
+    assert(to != null);
+    assert(data != null);
+    if (verbose) {
+      _.smallArrowOut("Sending data $data to $to");
+    }
+    final response = await _sendData(title, data, to, _suffix);
+    if (response == null || response.statusCode != HttpStatus.ok) {
+      final ecode = response?.statusCode ?? _e.noResponse;
+      _.warning("Error sending the data response: $ecode");
+    }
+  }
+
+  Future<void> _sendInfo(String title, String to) async {
+    final response = await _sendData(title, null, to, _suffix);
+    if (response == null || response.statusCode != HttpStatus.ok) {
+      final ecode = response?.statusCode ?? _e.noResponse;
+      _.warning("Error sending the info response: $ecode");
+    }
+  }
+
   Future<Response> _sendData(
       String title, dynamic data, String to, String endPoint) async {
     assert(to != null);
@@ -178,10 +186,10 @@ abstract class BaseNode {
       response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
-        _.error(e, "http error with response");
+        _.error(e, _e.httpResponse);
         return response;
       } else {
-        _.error(e, "http error with no response");
+        _.error(e, _e.httpNoResponse);
       }
     } catch (e) {
       rethrow;
@@ -189,29 +197,13 @@ abstract class BaseNode {
     return response;
   }
 
-  Future<void> _broadcastForDiscovery() async {
-    assert(host != null);
-    assert(_isServer);
-    await _socketReady.future;
-    final payload =
-        DataPacket(host: host, port: port, name: name, title: "client_connect")
-            .encodeToString();
-    final data = utf8.encode(payload);
-    String broadcastAddr;
-    final l = host.split(".");
-    broadcastAddr = "${l[0]}.${l[1]}.${l[2]}.255";
+  /// To be run when the HTTP Server is no longer required
+  void dispose() {
+    _dataResponce.close();
+    _socket.close();
+    iso.kill();
     if (verbose) {
-      print("Broadcasting to $broadcastAddr: $payload");
+      print(_isServer ? "Server Disposed" : "Client Disposed");
     }
-    _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
-  }
-
-  int _randomSocketPort() {
-    return 9104;
-    /*
-    const int min = 9100;
-    const int max = 9999;
-    final n = Random().nextInt((max - min).toInt());
-    return min + n;*/
   }
 }

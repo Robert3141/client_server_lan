@@ -1,4 +1,8 @@
-## [1.0.1] -- 21/04/2020
+## [1.0.2] - 30/04/2020
+
+* Code cleanup and addition to documentation
+
+## [1.0.1] - 21/04/2020
 
 * Minor changes to code formatting
 
