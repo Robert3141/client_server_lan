@@ -26,10 +26,15 @@ class _e {
 const String _suffix = "/cmd";
 
 abstract class BaseNode {
+  /// The String chosen as the name of the Node
   String name;
+  /// The IP adress of the Node
   String host;
+  /// The Port of the Node
   int port;
+  /// The http server used for data transmission
   IsoHttpd iso;
+  /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
   RawDatagramSocket _socket;
 
@@ -148,6 +153,7 @@ abstract class BaseNode {
     }
   }
 
+  /// The method to transmit to another Node on the network. The data is transferred over LAN.
   Future<void> sendData(String title, dynamic data, String to) async {
     assert(to != null);
     assert(data != null);

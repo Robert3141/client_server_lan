@@ -19,7 +19,7 @@ class ConnectedClientNode {
   DateTime lastSeen;
 }
 
-/// The type of data that is sent and received. It includes all the neccessary information
+/// The type of data that is sent and received. It includes all the neccessary information for that specific communication. The most useful data is the payload, then packet title and the name/host of the sender.
 class DataPacket {
   DataPacket(
       {@required this.name,
@@ -53,6 +53,9 @@ class DataPacket {
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() =>
       '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload"}';
+
+  @override
+  String toString() => encodeToString();
 }
 
 Future<HttpResponse> _responseHandler(
