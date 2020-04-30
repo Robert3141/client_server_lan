@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:uuid/uuid.dart';
 import 'package:dio/dio.dart';
 import 'package:isohttpd/isohttpd.dart';
 import 'package:meta/meta.dart';
@@ -25,23 +24,12 @@ class _e {
 
 const String _suffix = "/cmd";
 
-abstract class BaseNode {
-  /// The String chosen as the name of the Node
-  String name;
-
-  /// The IP adress of the Node
-  String host;
-
-  /// The Port of the Node
-  int port;
-
-  /// The http server used for data transmission
-  IsoHttpd iso;
-
-  /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
-  bool verbose;
+abstract class _BaseNode {
+  String _name;
+  String _host;
+  int _port;  
+  IsoHttpd _iso;
   RawDatagramSocket _socket;
-
   bool _isServer;
   int _socketPort;
   bool _isRunning = false;
@@ -52,6 +40,9 @@ abstract class BaseNode {
   final Completer _readyCompleter = Completer<void>();
   final StreamController<DataPacket> _dataResponce =
       StreamController<DataPacket>.broadcast();
+
+  /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
+  bool verbose;
 
   /// The way to access the status of the HTTP Listener
   void status() => iso.status();
@@ -65,15 +56,27 @@ abstract class BaseNode {
   /// The data stream to listen on for incoming data sent from devices on the LAN
   Stream<DataPacket> get dataResponse => _dataResponce.stream;
 
-  Future<void> _initNode(String _host, bool isServer,
+  /// The IP adress of the Node
+  get host => _host;
+
+  /// The String chosen as the name of the Node
+  get name => _name;
+
+  /// The Port of the Node
+  get port => _port;
+
+  /// The http server used for data transmission
+  get iso => _iso;
+
+  Future<void> _initNode(String _h, bool isServer,
       {@required bool start}) async {
-    host = _host;
+    _host = _h;
     _isServer = isServer;
     //socket port
     _socketPort ??= _randomSocketPort();
     final router = _initRoutes();
     // run isolate
-    iso = IsoHttpd(host: host, port: port, router: router);
+    _iso = IsoHttpd(host: host, port: port, router: router);
     await iso.run(startServer: start);
     _listenToIso();
     await iso.onServerStarted;
@@ -91,13 +94,13 @@ abstract class BaseNode {
   }
 
   IsoRouter _initRoutes() {
-    this.host = host;
-    this.port = port;
+    this._host = host;
+    this._port = port;
     final routes = <IsoRoute>[];
     routes.add(IsoRoute(handler: _responseHandler, path: _suffix));
     final router = IsoRouter(routes);
     //run isolate
-    iso = IsoHttpd(host: host, router: router);
+    _iso = IsoHttpd(host: host, router: router);
     return router;
   }
 
@@ -126,10 +129,11 @@ abstract class BaseNode {
       if (data is String) {
         //data is message about server
         if (verbose) {
-          print(data);
+          print("Received: $data");
         }
       } else if (data is DataPacket) {
-        if (data.payload != null) {
+        if (data.payload != null && data.payload!= "null") {
+          _.data("Recieved Packet: ${data.name} : ${data.payload}");
           _dataResponce.sink.add(data);
         } else if (verbose) {
           print("Empty packet recieved from ${data.host}:${data.port}");

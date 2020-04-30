@@ -1,5 +1,8 @@
 # client_server_lan
 
+[![Pub](https://img.shields.io/pub/v/client_server_lan.svg)](https://pub.dev/packages/client_server_lan)
+[![Documentation](https://img.shields.io/badge/API-reference-blue)](https://pub.dev/documentation/client_server_lan/latest/client_server_lan/client_server_lan-library.html)
+
 A LAN communication Flutter package based off [Node Commander](https://github.com/synw/nodecommander) but removing parts such as Commander Nodes and making communication between client and server two way.
 
 ## Usage

@@ -1,6 +1,7 @@
 part of 'basenode.dart';
 
-class ServerNode extends BaseServerNode {
+/// The Node for if the device is to act as a server (i.e connect to all the clients). It can communicate with all the clients it's connected to.
+class ServerNode extends _BaseServerNode {
   ServerNode(
       {@required this.name, this.host, this.port = 8084, this.verbose = false})
       : assert(name != null) {
@@ -31,12 +32,12 @@ class ServerNode extends BaseServerNode {
   Future<void> init({String ip, bool start = true}) async {
     var _h = ip;
     _h ??= host;
-    _h ??= await getHost();
+    _h ??= await _getHost();
     await _initServerNode(_h, start: start);
   }
 }
 
-abstract class BaseServerNode with BaseNode {
+abstract class _BaseServerNode with _BaseNode {
   BaseServerNode() {
     _isServer = true;
   }

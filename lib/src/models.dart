@@ -1,15 +1,5 @@
 part of 'basenode.dart';
 
-Uuid uuid = Uuid();
-
-enum CommandStatus {
-  pending,
-  authorizedToRun,
-  unauthorizedToRun,
-  success,
-  executionError
-}
-
 class ConnectedClientNode {
   ConnectedClientNode(
       {@required this.name, @required this.address, this.lastSeen});
