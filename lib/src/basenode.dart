@@ -28,12 +28,16 @@ const String _suffix = "/cmd";
 abstract class BaseNode {
   /// The String chosen as the name of the Node
   String name;
+
   /// The IP adress of the Node
   String host;
+
   /// The Port of the Node
   int port;
+
   /// The http server used for data transmission
   IsoHttpd iso;
+
   /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
   RawDatagramSocket _socket;
