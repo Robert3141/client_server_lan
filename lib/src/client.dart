@@ -1,6 +1,7 @@
 part of 'basenode.dart';
 
-class ClientNode extends BaseClientNode {
+/// The Node for if the device is to act as a client (i.e wait for server to connect to it). It can only communicate with the server. Additional work needs to be added in order to facilitate data forwarding.
+class ClientNode extends _BaseClientNode {
   ClientNode(
       {@required this.name, this.host, this.port = 8084, this.verbose = false})
       : assert(name != null) {
@@ -30,12 +31,12 @@ class ClientNode extends BaseClientNode {
   /// Used to setup the Node ready for use
   Future<void> init({String ip, bool start = true}) async {
     ip ??= host;
-    ip ??= await getHost();
+    ip ??= await _getHost();
     await _initClientNode(ip, start: start);
   }
 }
 
-abstract class BaseClientNode with BaseNode {
+abstract class _BaseClientNode with _BaseNode {
   BaseClientNode() {
     _isServer = false;
   }
