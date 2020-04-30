@@ -1,3 +1,8 @@
+## [1.1.0] - 30/04/2020
+
+* Remove access to internal API components to make API simpler
+* Added a shield.io so easy to find auto generated documentation and the pub.dev package
+
 ## [1.0.2] - 30/04/2020
 
 * Code cleanup and addition to documentation
