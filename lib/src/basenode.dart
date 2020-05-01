@@ -107,38 +107,42 @@ abstract class _BaseNode {
   void _listenToIso() {
     iso.logs.listen((dynamic data) async {
       if (data is Map<String, dynamic>) {
+        // String map recieved when initial handshake
         data = DataPacket.fromJson(data);
         if (data.title == "client_connect") {
+          // add new client
           final client = ConnectedClientNode(
-              name: data.name,
-              address: "${data.host}:${data.port}",
-              lastSeen: DateTime.now());
+              data.name, "${data.host}:${data.port}", DateTime.now());
           _clients.add(client);
           if (verbose) {
             _.state(
                 "Client ${data.name} connected at ${data.host}:${data.port}");
           }
-        } else {
-          if (data.payload != "null") {
-            _dataResponce.sink.add(data);
-          } else if (verbose) {
-            print("Empty packet recieved from ${data.host}:${data.port}");
-          }
-        }
-      }
-      if (data is String) {
-        //data is message about server
-        if (verbose) {
-          print("Received: $data");
+        } else if (verbose) {
+          print("String Map received $data");
         }
       } else if (data is DataPacket) {
-        if (data.payload != null && data.payload != "null") {
+        // Data in format as expected
+        if (data._checkForData()) {
+          //packet recieved and with data in
           _.data("Recieved Packet: ${data.name} : ${data.payload}");
           _dataResponce.sink.add(data);
+          //update last seen
+          if (_clients != null) {
+            for (int i = 0; i < _clients.length; i++) {
+              if (_clients[i].address == data.host) {
+                _clients[i].lastSeen = DateTime.now();
+                i = _clients.length;
+              }
+            }
+          } else {
+            _.error("Packet received but no client");
+          }
         } else if (verbose) {
           print("Empty packet recieved from ${data.host}:${data.port}");
         }
       } else {
+        // Data not in expected format
         if (verbose) {
           _.error("Data received type ${data.runtimeType} not packet: " +
               data.toString());

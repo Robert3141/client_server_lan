@@ -1,11 +1,19 @@
 part of 'basenode.dart';
 
+/// The data stored about the specific that is connected. This includes the name, IP address and time last seen. Most useful for indexing the client names rather than displaying than getting the user to enter raw IP adresses.
 class ConnectedClientNode {
-  ConnectedClientNode(
-      {@required this.name, @required this.address, this.lastSeen});
+  ConnectedClientNode(String name, String address, DateTime lastSeen)
+      : this.name = name,
+        this.address = address,
+        this.lastSeen = lastSeen;
 
+  /// The user assigned name of the connected client
   final String name;
+
+  /// The IP address of the connected client
   final String address;
+
+  /// The time the connected client was last seen
   DateTime lastSeen;
 }
 
@@ -46,6 +54,15 @@ class DataPacket {
 
   @override
   String toString() => encodeToString();
+
+  bool _checkForData() {
+    bool good = host != null;
+    good = good ? port != null : false;
+    good = good ? name != null : false;
+    good = good ? title != null : false;
+    good = good ? payload != null : false;
+    return good ? payload != "null" : false;
+  }
 }
 
 Future<HttpResponse> _responseHandler(

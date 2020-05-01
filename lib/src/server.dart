@@ -42,6 +42,7 @@ abstract class _BaseServerNode with _BaseNode {
     _isServer = true;
   }
 
+  /// Returns a list of clients connected in the form of Connected Client Node (an object which contains info such as last seen, name and address)
   List<ConnectedClientNode> get clientsConnected => _clients;
 
   /// Used to scan for client Nodes
