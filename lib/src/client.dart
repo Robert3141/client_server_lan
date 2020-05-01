@@ -68,10 +68,8 @@ abstract class _BaseClientNode with _BaseNode {
       }
       final message = utf8.decode(d.data).trim();
       final dynamic data = json.decode(message);
-      _server = ConnectedClientNode(
-          "${data["host"]}:${data["port"]}",
-          data["name"].toString(),
-          DateTime.now());
+      _server = ConnectedClientNode("${data["host"]}:${data["port"]}",
+          data["name"].toString(), DateTime.now());
       if (verbose) {
         print(
             "Recieved connection request from Client ${data["host"]}:${data["port"]}");
