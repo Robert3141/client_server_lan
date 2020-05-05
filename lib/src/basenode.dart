@@ -14,6 +14,7 @@ part 'host.dart';
 
 //errors
 const _ = EmoDebug();
+const String _suffix = "/cmd";
 
 class _e {
   static const String nodeReady = "Node is ready";
@@ -21,8 +22,6 @@ class _e {
   static const String httpNoResponse = "http error with no response";
   static const String noResponse = "no response";
 }
-
-const String _suffix = "/cmd";
 
 abstract class _BaseNode {
   String _name;
@@ -166,7 +165,7 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(String title, dynamic data, String to) async {
+  Future<void> sendData(dynamic data, [String title = "no name", String to]) async {
     assert(to != null);
     assert(data != null);
     if (verbose) {
