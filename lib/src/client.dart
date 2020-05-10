@@ -78,7 +78,7 @@ abstract class _BaseClientNode with _BaseNode {
             "Recieved connection request from Client ${data["host"]}:${data["port"]}");
       }
       final String addr = "${data["host"]}:${data["port"]}";
-      await _sendInfo("client_connect", addr);
+      await _sendInfo(_s.clientConnect, addr);
     });
   }
 
@@ -86,5 +86,10 @@ abstract class _BaseClientNode with _BaseNode {
   Future<void> sendData(dynamic data, [String title = "no name", String to]) async {
     to = serverDetails.address;
     return super.sendData(data,title,to);
+  }
+
+  Future<List<ConnectedClientNode>> getConnectedClients() async {
+    _sendInfo(_s.getClientNames, serverDetails.address);
+    return await _connectedClients.stream.first;
   }
 }

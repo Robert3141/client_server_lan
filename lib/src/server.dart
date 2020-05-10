@@ -83,7 +83,7 @@ abstract class _BaseServerNode with _BaseNode {
     assert(_isServer);
     await _socketReady.future;
     final payload =
-        DataPacket(host: host, port: port, name: name, title: "client_connect")
+        DataPacket(host: host, port: port, name: name, title: _s.clientConnect)
             .encodeToString();
     final data = utf8.encode(payload);
     String broadcastAddr;

@@ -24,14 +24,16 @@ class DataPacket {
       @required this.host,
       @required this.port,
       @required this.title,
-      this.payload});
+      this.payload,
+      this.to});
 
   DataPacket.fromJson(Map<String, dynamic> json)
       : this.host = json["host"],
         this.port = int.parse(json["port"]),
         this.name = json["name"],
         this.title = json["title"],
-        this.payload = json["payload"];
+        this.payload = json["payload"],
+        this.to = json["to"];
 
   /// The IP adress of the sender
   final String host;
@@ -48,9 +50,12 @@ class DataPacket {
   /// The actual data being ditributed
   final dynamic payload;
 
+  /// The destination IP of the packet
+  final String to;
+
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() =>
-      '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload"}';
+      '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload", "to": "$to"}';
 
   @override
   String toString() => encodeToString();
@@ -61,6 +66,9 @@ class DataPacket {
     good = good ? name != null : false;
     good = good ? title != null : false;
     good = good ? payload != null : false;
+    good = good ? title != _s.clientConnect : false;
+    good = good ? title != _s.forwardData : false;
+    good = good ? title != _s.getClientNames : false;
     return good ? payload != "null" : false;
   }
 }

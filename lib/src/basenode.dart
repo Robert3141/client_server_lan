@@ -16,11 +16,19 @@ part 'host.dart';
 const _ = EmoDebug();
 const String _suffix = "/cmd";
 
+// Strings for debug outputs
 class _e {
   static const String nodeReady = "Node is ready";
   static const String httpResponse = "http error with response";
   static const String httpNoResponse = "http error with no response";
   static const String noResponse = "no response";
+}
+
+// Strings for internal commands
+class _s {
+  static const String clientConnect = "client_connect";
+  static const String getClientNames = "client_names";
+  static const String forwardData = "forward_data";
 }
 
 abstract class _BaseNode {
@@ -39,6 +47,8 @@ abstract class _BaseNode {
   final Completer _readyCompleter = Completer<void>();
   final StreamController<DataPacket> _dataResponce =
       StreamController<DataPacket>.broadcast();
+  final StreamController<List<ConnectedClientNode>> _connectedClients =
+      StreamController<List<ConnectedClientNode>>.broadcast();
 
   /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
@@ -108,7 +118,7 @@ abstract class _BaseNode {
       if (data is Map<String, dynamic>) {
         // String map recieved when initial handshake
         data = DataPacket.fromJson(data);
-        if (data.title == "client_connect") {
+        if (data.title == _s.clientConnect) {
           // add new client
           final client = ConnectedClientNode(
               data.name, "${data.host}:${data.port}", DateTime.now());
@@ -136,6 +146,45 @@ abstract class _BaseNode {
             }
           } else {
             _.error("Packet received but no client");
+          }
+        } else if (data.title == _s.getClientNames) {
+          //Internal command
+          if (_isServer) {
+            sendData(_clients, _s.getClientNames, data.host);
+          } else {
+            _connectedClients.sink.add(data.payload);
+          }
+        } else if (data.title == _s.forwardData) {
+          if (_isServer) {
+            // The server recieves the packet
+            if (verbose) {
+              _.smallArrowOut("Sending data $data to ${data.to}");
+            }
+            //send the data
+            final uri = "http://${data.to}$_suffix";
+            Response response;
+            final packet = data;
+            try {
+              response =
+                  await _dio.post<dynamic>(uri, data: packet.encodeToString());
+            } on DioError catch (e) {
+              if (e.response != null) {
+                _.error(e, _e.httpResponse);
+              } else {
+                _.error(e, _e.httpNoResponse);
+              }
+            } catch (e) {
+              rethrow;
+            }
+            //await the response
+            if (response == null || response.statusCode != HttpStatus.ok) {
+              final ecode = response?.statusCode ?? _e.noResponse;
+              _.warning("Error sending the data response: $ecode");
+            }
+          } else {
+            // The client recieves the packet
+            _.data("Recieved Packet: ${data.name} : ${data.payload}");
+            _dataResponce.sink.add(data);
           }
         } else if (verbose) {
           print("Empty packet recieved from ${data.host}:${data.port}");
@@ -165,9 +214,14 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(dynamic data, [String title = "no name", String to]) async {
+  Future<void> sendData(dynamic data,
+      [String title = "no name", String to]) async {
     assert(to != null);
     assert(data != null);
+    //check internal commands
+    assert(title != _s.clientConnect);
+    assert(title != _s.getClientNames);
+    assert(title != _s.forwardData);
     if (verbose) {
       _.smallArrowOut("Sending data $data to $to");
     }
