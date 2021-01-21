@@ -5,6 +5,8 @@
 
 A LAN communication Flutter package based off [Node Commander](https://github.com/synw/nodecommander) but removing parts such as Commander Nodes and making communication between client and server two way.
 
+ONLY SUPPORTS ANDROID AT THE MOMENT!!!
+
 ## Usage
 
 ### Run a Node
