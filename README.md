@@ -8,6 +8,30 @@ A LAN communication Flutter package based off [Node Commander](https://github.co
 ONLY SUPPORTS ANDROID AT THE MOMENT!!!
 
 ## Usage
+### Add to android files
+
+In android/app/AndroidManifest
+
+```
+<application ...
+  android:networkSecurityConfig="@xml/network_security_config" >
+
+ <meta-data android:name="io.flutter.network-policy"
+        android:resource="@xml/network_security_config"/>
+```
+
+Then create a folder xml inside create a file: network_security_config.xml
+```
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true">
+     <trust-anchors>
+        <certificates src="system" />
+    </trust-anchors>
+  </base-config>
+ </network-security-config>
+```
+
 
 ### Run a Node
 
