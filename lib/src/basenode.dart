@@ -113,7 +113,16 @@ abstract class _BaseNode {
               name: data.name,
               address: "${data.host}:${data.port}",
               lastSeen: DateTime.now());
-          _clients.add(client);
+          //check client not the same as currently in database if so update current client
+          if (_clients.any((element) => element.address == client.address)) {
+            //client exists so replace
+            for (int i = 0; i < _clients.length; i++) {
+              if (client.address == _clients[i].address) _clients[i] = client;
+            }
+          } else {
+            //client is new
+            _clients.add(client);
+          }
           if (verbose) {
             _.state(
                 "Client ${data.name} connected at ${data.host}:${data.port}");
