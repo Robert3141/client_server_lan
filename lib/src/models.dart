@@ -38,7 +38,7 @@ class DataPacket {
   final String title;
 
   /// The actual data being ditributed
-  final Object payload;
+  final String payload;
 
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() =>

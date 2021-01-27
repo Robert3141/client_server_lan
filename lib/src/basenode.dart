@@ -41,6 +41,12 @@ abstract class _BaseNode {
   final StreamController<DataPacket> _dataResponce =
       StreamController<DataPacket>.broadcast();
 
+  static const List<String> internalTitles = [
+    "client_connect",
+    "client_disconnect",
+    "client_dispose"
+  ];
+
   /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
 
@@ -107,32 +113,44 @@ abstract class _BaseNode {
   void _listenToIso() {
     iso.logs.listen((Object data) async {
       if (data is Map<String, Object>) {
+        //convert to packet
         DataPacket packet = DataPacket.fromJson(data);
-        if (packet.title == "client_connect") {
-          final client = ConnectedClientNode(
-              name: packet.name,
-              address: "${packet.host}:${packet.port}",
-              lastSeen: DateTime.now());
-          //check client not the same as currently in database if so update current client
-          if (_clients.any((element) => element.address == client.address)) {
-            //client exists so replace
-            for (int i = 0; i < _clients.length; i++) {
-              if (client.address == _clients[i].address) _clients[i] = client;
+        //check for titles
+        switch (packet.title) {
+          case "client_connect":
+            //client connect request
+            final client = ConnectedClientNode(
+                name: packet.name,
+                address: "${packet.host}:${packet.port}",
+                lastSeen: DateTime.now());
+            //check client not the same as currently in database if so update current client
+            if (_clients.any((element) => element.address == client.address)) {
+              //client exists so replace
+              for (int i = 0; i < _clients.length; i++) {
+                if (client.address == _clients[i].address) _clients[i] = client;
+              }
+            } else {
+              //client is new
+              _clients.add(client);
             }
-          } else {
-            //client is new
-            _clients.add(client);
-          }
-          if (verbose) {
-            _.state(
-                "Client ${packet.name} connected at ${packet.host}:${packet.port}");
-          }
-        } else {
-          if (packet.payload != "null") {
-            _dataResponce.sink.add(packet);
-          } else if (verbose) {
-            print("Empty packet recieved from ${packet.host}:${packet.port}");
-          }
+            if (verbose) {
+              _.state(
+                  "Client ${packet.name} connected at ${packet.host}:${packet.port}");
+            }
+            break;
+          case "client_disconnect":
+            //client sends a disconnect message
+            break;
+          case "client_dispose":
+            //client is disposed
+            this.dispose();
+            break;
+          default:
+            if (packet.payload != "null") {
+              _dataResponce.sink.add(packet);
+            } else if (verbose) {
+              print("Empty packet recieved from ${packet.host}:${packet.port}");
+            }
         }
       }
       if (data is String) {
@@ -171,9 +189,10 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(String title, Object data, String to) async {
+  Future<void> sendData(String title, String data, String to) async {
     assert(to != null);
     assert(data != null);
+    assert(!internalTitles.contains(data));
     if (verbose) {
       _.smallArrowOut("Sending data $data to $to");
     }
@@ -193,7 +212,7 @@ abstract class _BaseNode {
   }
 
   Future<Response> _sendData(
-      String title, Object data, String to, String endPoint) async {
+      String title, String data, String to, String endPoint) async {
     assert(to != null);
     final uri = "http://$to$endPoint";
     Response response;

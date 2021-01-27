@@ -102,6 +102,8 @@ void findClients() async {
 
 ### Transfer Data
 
+WARNING: Data not excepted with titles in `client.internalTitles`/`server.internalTitles`
+
 Transfer from Client to Server
 
 ```dart

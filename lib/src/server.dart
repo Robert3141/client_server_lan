@@ -93,4 +93,14 @@ abstract class _BaseServerNode with _BaseNode {
     }
     _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
+
+  @override
+  void dispose() async {
+    //tell all the clients to dispose
+    if (_clients != null && _isRunning)
+      await _clients.forEach((c) async {
+        await _sendInfo("client_dispose", c.address);
+      });
+    super.dispose();
+  }
 }

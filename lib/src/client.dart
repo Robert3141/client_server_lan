@@ -84,4 +84,12 @@ abstract class _BaseClientNode with _BaseNode {
   @override
   Future<void> sendData(String title, Object data, [String to]) =>
       super.sendData(title, data, to ?? this.serverDetails.address);
+
+  @override
+  void dispose() async {
+    // tell server that this client has been disposed
+    if (isRunning && _server != null)
+      await _sendInfo("client_disconnect", _server.address);
+    super.dispose();
+  }
 }
