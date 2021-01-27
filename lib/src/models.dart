@@ -60,18 +60,6 @@ class DataPacket {
 
   @override
   String toString() => encodeToString();
-
-  bool _checkForData() {
-    bool good = host != null;
-    good = good ? port != null : false;
-    good = good ? name != null : false;
-    good = good ? title != null : false;
-    good = good ? payload != null : false;
-    good = good ? title != _s.clientConnect : false;
-    good = good ? title != _s.forwardData : false;
-    good = good ? title != _s.getClientNames : false;
-    return good ? payload != "null" : false;
-  }
 }
 
 Future<HttpResponse> _responseHandler(

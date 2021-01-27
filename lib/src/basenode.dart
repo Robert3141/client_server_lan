@@ -31,6 +31,15 @@ class _s {
   static const String forwardData = "forward_data";
   static const String clientDisconnect = "client_disconnect";
   static const String clientDispose = "client_dispose";
+
+  //list of all these strings
+  static const List<String> titles = [
+    clientConnect,
+    getClientNames,
+    forwardData,
+    clientDisconnect,
+    clientDispose
+  ];
 }
 
 abstract class _BaseNode {
@@ -119,44 +128,7 @@ abstract class _BaseNode {
     iso.logs.listen((Object data) async {
       if (data is Map<String, Object>) {
         //convert to packet
-        DataPacket packet = DataPacket.fromJson(data);
-        //check for titles
-        switch (packet.title) {
-          case _s.clientConnect:
-            //client connect request
-            final client = ConnectedClientNode(
-                name: packet.name,
-                address: "${packet.host}:${packet.port}",
-                lastSeen: DateTime.now());
-            //check client not the same as currently in database if so update current client
-            if (_clients.any((element) => element.address == client.address)) {
-              //client exists so replace
-              for (int i = 0; i < _clients.length; i++) {
-                if (client.address == _clients[i].address) _clients[i] = client;
-              }
-            } else {
-              //client is new
-              _clients.add(client);
-            }
-            if (verbose) {
-              _.state(
-                  "Client ${packet.name} connected at ${packet.host}:${packet.port}");
-            }
-            break;
-          case "client_disconnect":
-            //client sends a disconnect message
-            break;
-          case "client_dispose":
-            //client is to be dispose
-            this.dispose();
-            break;
-          default:
-            if (packet.payload != "null") {
-              _dataResponce.sink.add(packet);
-            } else if (verbose) {
-              print("Empty packet recieved from ${packet.host}:${packet.port}");
-            }
-        }
+        data = DataPacket.fromJson(data);
       }
       if (data is String) {
         //data is message about server
@@ -165,62 +137,36 @@ abstract class _BaseNode {
         }
       } else if (data is DataPacket) {
         // Data in format as expected
-        if (data._checkForData()) {
-          //packet recieved and with data in
-          _.data("Recieved Packet: ${data.name} : ${data.payload}");
-          _dataResponce.sink.add(data);
-          //update last seen
-          if (_clients != null) {
-            for (int i = 0; i < _clients.length; i++) {
-              if (_clients[i].address == data.host) {
-                _clients[i].lastSeen = DateTime.now();
-                i = _clients.length;
-              }
-            }
-          } else {
-            _.error("Packet received but no client");
-          }
-        } else if (data.title == _s.getClientNames) {
-          //Internal command
-          if (_isServer) {
-            sendData(_clients, _s.getClientNames, data.host);
-          } else {
-            _connectedClients.sink.add(data.payload);
-          }
-        } else if (data.title == _s.forwardData) {
-          if (_isServer) {
-            // The server recieves the packet
-            if (verbose) {
-              _.smallArrowOut("Sending data $data to ${data.to}");
-            }
-            //send the data
-            final uri = "http://${data.to}$_suffix";
-            Response response;
-            final packet = data;
-            try {
-              response =
-                  await _dio.post<dynamic>(uri, data: packet.encodeToString());
-            } on DioError catch (e) {
-              if (e.response != null) {
-                _.error(e, _e.httpResponse);
-              } else {
-                _.error(e, _e.httpNoResponse);
-              }
-            } catch (e) {
-              rethrow;
-            }
-            //await the response
-            if (response == null || response.statusCode != HttpStatus.ok) {
-              final ecode = response?.statusCode ?? _e.noResponse;
-              _.warning("Error sending the data response: $ecode");
-            }
-          } else {
-            // The client recieves the packet
+        switch (data.title) {
+          case _s.clientConnect:
+            await _handleConnect(data);
+            break;
+          case _s.clientDisconnect:
+            await _handleDisconnect(data);
+            break;
+          case _s.clientDispose:
+            await _handleDispose(data);
+            break;
+          case _s.forwardData:
+            await _handleForwardData(data);
+            break;
+          case _s.getClientNames:
+            await _handleGetNames(data);
+            break;
+          default:
+            //packet recieved
             _.data("Recieved Packet: ${data.name} : ${data.payload}");
             _dataResponce.sink.add(data);
-          }
-        } else if (verbose) {
-          print("Empty packet recieved from ${data.host}:${data.port}");
+            //update last seen
+            if (_clients != null) {
+              for (int i = 0; i < _clients.length; i++) {
+                if (_clients[i].address == data.host) {
+                  _clients[i].lastSeen = DateTime.now();
+                  i = _clients.length;
+                }
+              }
+              break;
+            }
         }
       } else {
         // Data not in expected format
@@ -251,10 +197,8 @@ abstract class _BaseNode {
       [String title = "no name", String to]) async {
     assert(to != null);
     assert(data != null);
-    //check internal commands
-    assert(title != _s.clientConnect);
-    assert(title != _s.getClientNames);
-    assert(title != _s.forwardData);
+    assert(!_s.titles.contains(title));
+
     if (verbose) {
       _.smallArrowOut("Sending data $data to $to");
     }
@@ -304,4 +248,75 @@ abstract class _BaseNode {
       print(_isServer ? "Server Disposed" : "Client Disposed");
     }
   }
+
+  //
+  // DATA RECEIVED ALGORITHMS
+  //
+
+  void _handleConnect(DataPacket data) {
+    //client connect request
+    final client = ConnectedClientNode(
+        name: data.name,
+        address: "${data.host}:${data.port}",
+        lastSeen: DateTime.now());
+    //check client not the same as currently in database if so update current client
+    if (_clients.any((element) => element.address == client.address)) {
+      //client exists so replace
+      for (int i = 0; i < _clients.length; i++) {
+        if (client.address == _clients[i].address) _clients[i] = client;
+      }
+    } else {
+      //client is new
+      _clients.add(client);
+    }
+    if (verbose) {
+      _.state("Client ${data.name} connected at ${data.host}:${data.port}");
+    }
+  }
+
+  void _handleGetNames(DataPacket data) {
+    if (_isServer) {
+      //return connected clients
+      sendData(_clients, _s.getClientNames, data.host);
+    } else {
+      //share to stream the connected clients
+      _connectedClients.sink.add(data.payload);
+    }
+  }
+
+  Future<void> _handleForwardData(DataPacket data) async {
+    if (_isServer) {
+      // The server recieves the packet
+      if (verbose) {
+        _.smallArrowOut("Sending data $data to ${data.to}");
+      }
+      //send the data
+      final uri = "http://${data.to}$_suffix";
+      Response response;
+      final packet = data;
+      try {
+        response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
+      } on DioError catch (e) {
+        if (e.response != null) {
+          _.error(e, _e.httpResponse);
+        } else {
+          _.error(e, _e.httpNoResponse);
+        }
+      } catch (e) {
+        rethrow;
+      }
+      //await the response
+      if (response == null || response.statusCode != HttpStatus.ok) {
+        final ecode = response?.statusCode ?? _e.noResponse;
+        _.warning("Error sending the data response: $ecode");
+      }
+    } else {
+      // The client recieves the packet
+      _.data("Recieved Packet: ${data.name} : ${data.payload}");
+      _dataResponce.sink.add(data);
+    }
+  }
+
+  Future<void> _handleDisconnect(DataPacket data) {}
+  Future<void> _handleDispose(DataPacket data) {}
 }
