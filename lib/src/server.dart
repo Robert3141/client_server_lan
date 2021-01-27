@@ -33,6 +33,7 @@ class ServerNode extends _BaseServerNode {
     var _h = ip;
     _h ??= host;
     _h ??= await _getHost();
+    this._host = _h;
     await _initServerNode(_h, start: start);
   }
 }

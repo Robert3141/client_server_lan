@@ -90,13 +90,14 @@ abstract class _BaseNode {
 
   Future<void> _initNode(String _h, bool isServer,
       {@required bool start}) async {
-    _host = _h;
     _isServer = isServer;
     //socket port
     _socketPort ??= _randomSocketPort();
     final router = _initRoutes();
     // run isolate
-    _iso = IsoHttpd(host: host, port: port, router: router);
+    print("host = $_host $host $_h");
+    this._host = _h;
+    _iso = IsoHttpd(host: _h, port: port, router: router);
     await iso.run(startServer: start);
     _listenToIso();
     await iso.onServerStarted;

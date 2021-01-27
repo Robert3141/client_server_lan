@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:wifi/wifi.dart';
 import 'package:client_server_lan/client_server_lan.dart';
+import 'dart:io';
 
 void main() async {
   runApp(MyApp());
@@ -44,13 +45,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void startServer() async {
     dropdownEnabled = false;
-    String ip = await Wifi.ip;
-    server = ServerNode(
-      name: "Server",
-      verbose: true,
-      host: ip,
-      port: 8085,
-    );
+    if (Platform.isAndroid || Platform.isIOS) {
+      String ip = await Wifi.ip;
+      server = ServerNode(
+        name: "Server",
+        verbose: true,
+        host: ip,
+      );
+    } else {
+      server = ServerNode(name: "Server", verbose: true);
+    }
     await server.init();
     await server.onReady;
     setState(() {
@@ -96,12 +100,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void clientToServer() async {
-    await client.sendData(dataToSend,"userInfo");
+    await client.sendData(dataToSend, "userInfo");
   }
 
   void serverToClient(String clientName) async {
     final String client = server.clientUri(clientName);
-    await server.sendData(dataToSend, "userInfo",client);
+    await server.sendData(dataToSend, "userInfo", client);
   }
 
   void disposeClient() {
