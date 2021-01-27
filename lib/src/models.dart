@@ -18,7 +18,7 @@ class DataPacket {
       @required this.title,
       this.payload});
 
-  DataPacket.fromJson(Map<String, dynamic> json)
+  DataPacket.fromJson(Map<String, Object> json)
       : this.host = json["host"],
         this.port = int.parse(json["port"]),
         this.name = json["name"],
@@ -38,7 +38,7 @@ class DataPacket {
   final String title;
 
   /// The actual data being ditributed
-  final dynamic payload;
+  final Object payload;
 
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() =>
@@ -51,7 +51,7 @@ class DataPacket {
 Future<HttpResponse> _responseHandler(
     HttpRequest request, IsoLogger log) async {
   final content = await utf8.decoder.bind(request).join();
-  dynamic c = content;
+  Object c = content;
   try {
     c = json.decode(c);
   } catch (e) {

@@ -105,13 +105,13 @@ abstract class _BaseNode {
   }
 
   void _listenToIso() {
-    iso.logs.listen((dynamic data) async {
-      if (data is Map<String, dynamic>) {
-        data = DataPacket.fromJson(data);
-        if (data.title == "client_connect") {
+    iso.logs.listen((Object data) async {
+      if (data is Map<String, Object>) {
+        DataPacket packet = DataPacket.fromJson(data);
+        if (packet.title == "client_connect") {
           final client = ConnectedClientNode(
-              name: data.name,
-              address: "${data.host}:${data.port}",
+              name: packet.name,
+              address: "${packet.host}:${packet.port}",
               lastSeen: DateTime.now());
           //check client not the same as currently in database if so update current client
           if (_clients.any((element) => element.address == client.address)) {
@@ -125,13 +125,13 @@ abstract class _BaseNode {
           }
           if (verbose) {
             _.state(
-                "Client ${data.name} connected at ${data.host}:${data.port}");
+                "Client ${packet.name} connected at ${packet.host}:${packet.port}");
           }
         } else {
-          if (data.payload != "null") {
-            _dataResponce.sink.add(data);
+          if (packet.payload != "null") {
+            _dataResponce.sink.add(packet);
           } else if (verbose) {
-            print("Empty packet recieved from ${data.host}:${data.port}");
+            print("Empty packet recieved from ${packet.host}:${packet.port}");
           }
         }
       }
@@ -171,7 +171,7 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(String title, dynamic data, String to) async {
+  Future<void> sendData(String title, Object data, String to) async {
     assert(to != null);
     assert(data != null);
     if (verbose) {
@@ -193,14 +193,14 @@ abstract class _BaseNode {
   }
 
   Future<Response> _sendData(
-      String title, dynamic data, String to, String endPoint) async {
+      String title, Object data, String to, String endPoint) async {
     assert(to != null);
     final uri = "http://$to$endPoint";
     Response response;
     final packet = DataPacket(
         host: host, port: port, name: name, title: title, payload: data);
     try {
-      response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
+      response = await _dio.post<Object>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
         _.error(e, _e.httpResponse);

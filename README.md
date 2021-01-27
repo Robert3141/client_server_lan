@@ -90,7 +90,7 @@ Server scan for Clients
 ```dart
 void findClients() async {
     server.discoverNodes();
-    await Future<dynamic>.delayed(const Duration(seconds: 2));
+    await Future<Object>.delayed(const Duration(seconds: 2));
     clientIPs = "";
     for (final s in server.clientsConnected) {
       setState(() {

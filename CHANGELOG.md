@@ -1,3 +1,7 @@
+## [1.2.0] - 26/01/2021
+
+* Clients from the same IP adress can't be added twice
+
 ## [1.1.0] - 30/04/2020
 
 * Remove access to internal API components to make API simpler

@@ -80,4 +80,8 @@ abstract class _BaseClientNode with _BaseNode {
       await _sendInfo("client_connect", addr);
     });
   }
+
+  @override
+  Future<void> sendData(String title, Object data, [String to]) =>
+      super.sendData(title, data, to ?? this.serverDetails.address);
 }
