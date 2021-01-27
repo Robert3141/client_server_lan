@@ -71,8 +71,10 @@ abstract class _BaseClientNode with _BaseNode {
       }
       final message = utf8.decode(d.data).trim();
       final dynamic data = json.decode(message);
-      _server = ConnectedClientNode("${data["host"]}:${data["port"]}",
-          data["name"].toString(), DateTime.now());
+      _server = ConnectedClientNode(
+          address: "${data["host"]}:${data["port"]}",
+          name: data["name"].toString(),
+          lastSeen: DateTime.now());
       if (verbose) {
         print(
             "Recieved connection request from Client ${data["host"]}:${data["port"]}");
@@ -82,14 +84,20 @@ abstract class _BaseClientNode with _BaseNode {
     });
   }
 
-  @override
-  Future<void> sendData(dynamic data, [String title = "no name", String to]) async {
-    to = serverDetails.address;
-    return super.sendData(data,title,to);
-  }
-
   Future<List<ConnectedClientNode>> getConnectedClients() async {
     _sendInfo(_s.getClientNames, serverDetails.address);
     return await _connectedClients.stream.first;
+  }
+
+  @override
+  Future<void> sendData(Object data, [String title = "no name", String to]) =>
+      super.sendData(data, title, to ?? this.serverDetails.address);
+
+  @override
+  void dispose() async {
+    // tell server that this client has been disposed
+    if (isRunning && _server != null)
+      await _sendInfo("client_disconnect", _server.address);
+    super.dispose();
   }
 }

@@ -2,10 +2,11 @@ part of 'basenode.dart';
 
 /// The data stored about the specific that is connected. This includes the name, IP address and time last seen. Most useful for indexing the client names rather than displaying than getting the user to enter raw IP adresses.
 class ConnectedClientNode {
-  ConnectedClientNode(String name, String address, DateTime lastSeen)
+  ConnectedClientNode(
+      {@required String name, @required String address, DateTime lastSeen})
       : this.name = name,
         this.address = address,
-        this.lastSeen = lastSeen;
+        this.lastSeen = lastSeen ?? DateTime.now();
 
   /// The user assigned name of the connected client
   final String name;
@@ -27,7 +28,7 @@ class DataPacket {
       this.payload,
       this.to});
 
-  DataPacket.fromJson(Map<String, dynamic> json)
+  DataPacket.fromJson(Map<String, Object> json)
       : this.host = json["host"],
         this.port = int.parse(json["port"]),
         this.name = json["name"],
@@ -48,7 +49,7 @@ class DataPacket {
   final String title;
 
   /// The actual data being ditributed
-  final dynamic payload;
+  final Object payload;
 
   /// The destination IP of the packet
   final String to;
@@ -76,7 +77,7 @@ class DataPacket {
 Future<HttpResponse> _responseHandler(
     HttpRequest request, IsoLogger log) async {
   final content = await utf8.decoder.bind(request).join();
-  dynamic c = content;
+  Object c = content;
   try {
     c = json.decode(c);
   } catch (e) {

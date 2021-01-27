@@ -1,3 +1,12 @@
+## [2.0.0] - 27/01/2021
+
+* If a client is disposed it tells the server.
+* If a server is disposed all the clients are disposed as well.
+
+## [1.2.0] - 26/01/2021
+
+* Clients from the same IP adress can't be added twice
+
 ## [1.1.0] - 30/04/2020
 
 * Remove access to internal API components to make API simpler

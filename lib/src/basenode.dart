@@ -29,6 +29,8 @@ class _s {
   static const String clientConnect = "client_connect";
   static const String getClientNames = "client_names";
   static const String forwardData = "forward_data";
+  static const String clientDisconnect = "client_disconnect";
+  static const String clientDispose = "client_dispose";
 }
 
 abstract class _BaseNode {
@@ -114,21 +116,52 @@ abstract class _BaseNode {
   }
 
   void _listenToIso() {
-    iso.logs.listen((dynamic data) async {
-      if (data is Map<String, dynamic>) {
-        // String map recieved when initial handshake
-        data = DataPacket.fromJson(data);
-        if (data.title == _s.clientConnect) {
-          // add new client
-          final client = ConnectedClientNode(
-              data.name, "${data.host}:${data.port}", DateTime.now());
-          _clients.add(client);
-          if (verbose) {
-            _.state(
-                "Client ${data.name} connected at ${data.host}:${data.port}");
-          }
-        } else if (verbose) {
-          print("String Map received $data");
+    iso.logs.listen((Object data) async {
+      if (data is Map<String, Object>) {
+        //convert to packet
+        DataPacket packet = DataPacket.fromJson(data);
+        //check for titles
+        switch (packet.title) {
+          case _s.clientConnect:
+            //client connect request
+            final client = ConnectedClientNode(
+                name: packet.name,
+                address: "${packet.host}:${packet.port}",
+                lastSeen: DateTime.now());
+            //check client not the same as currently in database if so update current client
+            if (_clients.any((element) => element.address == client.address)) {
+              //client exists so replace
+              for (int i = 0; i < _clients.length; i++) {
+                if (client.address == _clients[i].address) _clients[i] = client;
+              }
+            } else {
+              //client is new
+              _clients.add(client);
+            }
+            if (verbose) {
+              _.state(
+                  "Client ${packet.name} connected at ${packet.host}:${packet.port}");
+            }
+            break;
+          case "client_disconnect":
+            //client sends a disconnect message
+            break;
+          case "client_dispose":
+            //client is to be dispose
+            this.dispose();
+            break;
+          default:
+            if (packet.payload != "null") {
+              _dataResponce.sink.add(packet);
+            } else if (verbose) {
+              print("Empty packet recieved from ${packet.host}:${packet.port}");
+            }
+        }
+      }
+      if (data is String) {
+        //data is message about server
+        if (verbose) {
+          print("Received: $data");
         }
       } else if (data is DataPacket) {
         // Data in format as expected
@@ -241,14 +274,14 @@ abstract class _BaseNode {
   }
 
   Future<Response> _sendData(
-      String title, dynamic data, String to, String endPoint) async {
+      String title, String data, String to, String endPoint) async {
     assert(to != null);
     final uri = "http://$to$endPoint";
     Response response;
     final packet = DataPacket(
         host: host, port: port, name: name, title: title, payload: data);
     try {
-      response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
+      response = await _dio.post<Object>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
         _.error(e, _e.httpResponse);

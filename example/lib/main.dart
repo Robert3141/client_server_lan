@@ -86,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void findClients() async {
     server.discoverNodes();
-    await Future<dynamic>.delayed(const Duration(seconds: 2));
+    await Future<Object>.delayed(const Duration(seconds: 2));
     clientIPs = "";
     for (final s in server.clientsConnected) {
       setState(() {
@@ -123,7 +123,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     dropdownEnabled
-        ? dropdownValue == "Server" ? disposeServer() : disposeClient()
+        ? dropdownValue == "Server"
+            ? disposeServer()
+            : disposeClient()
         : print("Disposing");
     super.dispose();
   }
