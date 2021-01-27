@@ -142,7 +142,7 @@ abstract class _BaseNode {
             //client sends a disconnect message
             break;
           case "client_dispose":
-            //client is disposed
+            //client is to be dispose
             this.dispose();
             break;
           default:
