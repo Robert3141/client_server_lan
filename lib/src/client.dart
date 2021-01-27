@@ -2,18 +2,8 @@ part of 'basenode.dart';
 
 /// The Node for if the device is to act as a client (i.e wait for server to connect to it). It can only communicate with the server. Additional work needs to be added in order to facilitate data forwarding.
 class ClientNode extends _BaseClientNode {
-  ClientNode(
-      {@required this.name,
-      @required this.host,
-      this.port = 8084,
-      this.verbose = false})
-      : assert(name != null) {
-    if (Platform.isAndroid || Platform.isIOS) {
-      if (host == null) {
-        throw ArgumentError("Please provide a host");
-      }
-    }
-  }
+  ClientNode({@required this.name, this.port = 8084, this.verbose = false})
+      : assert(name != null);
 
   /// The name of the node on the network
   @override
@@ -32,15 +22,23 @@ class ClientNode extends _BaseClientNode {
   bool verbose;
 
   /// Used to setup the Node ready for use
-  Future<void> init({String ip, bool start = true}) async {
-    ip ??= host;
-    ip ??= await _getHost();
-    await _initClientNode(ip, start: start);
+  Future<void> init() async {
+    //change host
+    if (Platform.isAndroid || Platform.isIOS) {
+      this.host = await Wifi.ip;
+    } else {
+      try {
+        this.host = await _getHost();
+      } catch (e) {
+        throw ("Unable to get local IP address on platform error: $e");
+      }
+    }
+    await _initClientNode(this.host, start: true);
   }
 }
 
 abstract class _BaseClientNode with _BaseNode {
-  BaseClientNode() {
+  _BaseClientNode() {
     _isServer = false;
   }
 

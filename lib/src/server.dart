@@ -2,15 +2,8 @@ part of 'basenode.dart';
 
 /// The Node for if the device is to act as a server (i.e connect to all the clients). It can communicate with all the clients it's connected to.
 class ServerNode extends _BaseServerNode {
-  ServerNode(
-      {@required this.name, this.host, this.port = 8084, this.verbose = false})
-      : assert(name != null) {
-    if (Platform.isAndroid || Platform.isIOS) {
-      if (host == null) {
-        throw ArgumentError("Please provide a host for the node");
-      }
-    }
-  }
+  ServerNode({@required this.name, this.port = 8084, this.verbose = false})
+      : assert(name != null);
 
   /// The name of the node on the network
   @override
@@ -29,17 +22,23 @@ class ServerNode extends _BaseServerNode {
   bool verbose;
 
   /// Used to setup the Node ready for use
-  Future<void> init({String ip, bool start = true}) async {
-    var _h = ip;
-    _h ??= host;
-    _h ??= await _getHost();
-    this._host = _h;
-    await _initServerNode(_h, start: start);
+  Future<void> init() async {
+    //change host
+    if (Platform.isAndroid || Platform.isIOS) {
+      this.host = await Wifi.ip;
+    } else {
+      try {
+        this.host = await _getHost();
+      } catch (e) {
+        throw ("Unable to get local IP address on platform error: $e");
+      }
+    }
+    await _initServerNode(this.host, start: true);
   }
 }
 
 abstract class _BaseServerNode with _BaseNode {
-  BaseServerNode() {
+  _BaseServerNode() {
     _isServer = true;
   }
 
@@ -100,9 +99,9 @@ abstract class _BaseServerNode with _BaseNode {
   void dispose() async {
     //tell all the clients to dispose
     if (_clients != null && _isRunning)
-      await _clients.forEach((c) async {
+      for (ConnectedClientNode c in _clients) {
         await _sendInfo("client_dispose", c.address);
-      });
+      }
     super.dispose();
   }
 }

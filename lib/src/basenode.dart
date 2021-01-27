@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:isohttpd/isohttpd.dart';
 import 'package:meta/meta.dart';
 import 'package:emodebug/emodebug.dart';
+import 'package:wifi/wifi.dart';
 
 part 'server.dart';
 part 'client.dart';
@@ -17,6 +18,7 @@ const _ = EmoDebug();
 const String _suffix = "/cmd";
 
 // Strings for debug outputs
+// ignore: camel_case_types
 class _e {
   static const String nodeReady = "Node is ready";
   static const String httpResponse = "http error with response";
@@ -25,6 +27,7 @@ class _e {
 }
 
 // Strings for internal commands
+// ignore: camel_case_types
 class _s {
   static const String clientConnect = "client_connect";
   static const String getClientNames = "client_names";
@@ -140,19 +143,19 @@ abstract class _BaseNode {
         // Data in format as expected
         switch (data.title) {
           case _s.clientConnect:
-            await _handleConnect(data);
+            _handleConnect(data);
             break;
           case _s.clientDisconnect:
-            await _handleDisconnect(data);
+            _handleDisconnect(data);
             break;
           case _s.clientDispose:
-            await _handleDispose(data);
+            _handleDispose(data);
             break;
           case _s.forwardData:
             await _handleForwardData(data);
             break;
           case _s.getClientNames:
-            await _handleGetNames(data);
+            _handleGetNames(data);
             break;
           default:
             //packet recieved
@@ -243,6 +246,7 @@ abstract class _BaseNode {
   /// To be run when the HTTP Server is no longer required
   void dispose() {
     _dataResponce.close();
+    _connectedClients.close();
     _socket.close();
     iso.kill();
     if (verbose) {
@@ -318,6 +322,6 @@ abstract class _BaseNode {
     }
   }
 
-  Future<void> _handleDisconnect(DataPacket data) {}
-  Future<void> _handleDispose(DataPacket data) {}
+  void _handleDisconnect(DataPacket data) {}
+  void _handleDispose(DataPacket data) {}
 }

@@ -11,3 +11,4 @@ dependencies:
   isohttpd: ^0.4.0
   meta: ^1.1.8
   emodebug: ^0.4.0
+  wifi: ^0.1.5
