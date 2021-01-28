@@ -24,6 +24,8 @@ class _e {
   static const String httpResponse = "http error with response";
   static const String httpNoResponse = "http error with no response";
   static const String noResponse = "no response";
+  static const String shouldNotReceive =
+      "this node should not have received this command";
 }
 
 // Strings for internal commands
@@ -54,6 +56,7 @@ abstract class _BaseNode {
   bool _isServer;
   int _socketPort;
   bool _isRunning = false;
+  Function onDispose = () {};
 
   final Completer<void> _socketReady = Completer<void>();
   final List<ConnectedClientNode> _clients = <ConnectedClientNode>[];
@@ -322,6 +325,31 @@ abstract class _BaseNode {
     }
   }
 
-  void _handleDisconnect(DataPacket data) {}
-  void _handleDispose(DataPacket data) {}
+  void _handleDisconnect(DataPacket data) {
+    if (_isServer) {
+      //should occur
+      //remove from client list
+      for (int i = 0; i < _clients.length; i++) {
+        if (_clients[i].address == data.host) {
+          //remove
+          _clients.removeAt(i);
+          i = _clients.length;
+        }
+      }
+
+      //tell the programmer that it's been removed
+      onDispose();
+    } else {
+      if (verbose) _.error(_e.shouldNotReceive);
+    }
+  }
+
+  void _handleDispose(DataPacket data) {
+    if (!_isServer) {
+      //should occur
+      this.dispose();
+    } else {
+      if (verbose) _.error(_e.shouldNotReceive);
+    }
+  }
 }

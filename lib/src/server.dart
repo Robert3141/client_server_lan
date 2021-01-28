@@ -21,6 +21,10 @@ class ServerNode extends _BaseServerNode {
   @override
   bool verbose;
 
+  /// This function is called when a client has been disposed. They are removed from the connected clients list.
+  @override
+  Function onDispose;
+
   /// Used to setup the Node ready for use
   Future<void> init() async {
     //change host

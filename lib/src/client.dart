@@ -2,7 +2,11 @@ part of 'basenode.dart';
 
 /// The Node for if the device is to act as a client (i.e wait for server to connect to it). It can only communicate with the server. Additional work needs to be added in order to facilitate data forwarding.
 class ClientNode extends _BaseClientNode {
-  ClientNode({@required this.name, this.port = 8084, this.verbose = false})
+  ClientNode(
+      {@required this.name,
+      this.port = 8084,
+      this.verbose = false,
+      this.onDispose})
       : assert(name != null);
 
   /// The name of the node on the network
@@ -20,6 +24,10 @@ class ClientNode extends _BaseClientNode {
   /// Whether to debug print outputs of what's happening
   @override
   bool verbose;
+
+  /// This function is called when the node has been force disposed (usually as a result of dispose being called on the server)
+  @override
+  Function onDispose;
 
   /// Used to setup the Node ready for use
   Future<void> init() async {
@@ -94,6 +102,7 @@ abstract class _BaseClientNode with _BaseNode {
   @override
   void dispose() async {
     // tell server that this client has been disposed
+    onDispose();
     if (isRunning && _server != null)
       await _sendInfo("client_disconnect", _server.address);
     super.dispose();
