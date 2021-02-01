@@ -2,7 +2,12 @@ part of 'basenode.dart';
 
 /// The Node for if the device is to act as a server (i.e connect to all the clients). It can communicate with all the clients it's connected to.
 class ServerNode extends _BaseServerNode {
-  ServerNode({@required this.name, this.port = 8084, this.verbose = false})
+  ServerNode(
+      {@required this.name,
+      this.port = 8084,
+      this.verbose = false,
+      this.onDispose,
+      this.clientDispose})
       : assert(name != null);
 
   /// The name of the node on the network
@@ -21,9 +26,13 @@ class ServerNode extends _BaseServerNode {
   @override
   bool verbose;
 
+  /// This function is called when this server has been disposed. The clients are also forced to dispose as there is no server.
+  @override
+  Function() onDispose;
+
   /// This function is called when a client has been disposed. They are removed from the connected clients list.
   @override
-  Function onDispose;
+  Function(ConnectedClientNode c) clientDispose;
 
   /// Used to setup the Node ready for use
   Future<void> init() async {
@@ -51,6 +60,8 @@ abstract class _BaseServerNode with _BaseNode {
 
   /// Used to scan for client Nodes
   Future<void> discoverNodes() async => _broadcastForDiscovery();
+
+  Function(ConnectedClientNode c) clientDispose = (ConnectedClientNode c) {};
 
   Future<void> _initServerNode(String host, {@required bool start}) async {
     await _initNode(host, true, start: start);
@@ -104,8 +115,28 @@ abstract class _BaseServerNode with _BaseNode {
     //tell all the clients to dispose
     if (_clients != null && _isRunning)
       for (ConnectedClientNode c in _clients) {
-        await _sendInfo("client_dispose", c.address);
+        await _sendInfo(_s.clientDispose, c.address);
       }
     super.dispose();
+  }
+
+  @override
+  void _handleDisconnect(DataPacket data) {
+    //locals
+    ConnectedClientNode client;
+    //should occur
+    //remove from client list
+    for (int i = 0; i < _clients.length; i++) {
+      if (_clients[i].host == data.host) {
+        //remove
+        client = _clients.removeAt(i);
+        i = _clients.length;
+      }
+    }
+    if (_debug) print("disconnected client $client");
+    if (_debug) print("clients connected ${_clients.length}");
+
+    //tell the programmer that it's been removed
+    clientDispose(client);
   }
 }

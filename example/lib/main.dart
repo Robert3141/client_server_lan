@@ -10,12 +10,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'LAN Server-Client Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'LAN Server-Client Demo'),
     );
   }
 }
@@ -32,18 +32,32 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   ServerNode server;
   ClientNode client;
+  static const String clientName = "client";
+  static const String serverName = "server";
   bool dropdownEnabled = true;
   String serverStatus = "Server not running";
   String clientStatus = "Client not running";
   String clientIPs = "No devcies connected";
   String dataToSend = "Testing 1 2 3";
   String dataRecieved = "No response yet...";
-  String clientToSend = "client";
-  String dropdownValue = "Server";
+  String clientToSend = clientName;
+  String dropdownValue = serverName;
+  bool isRunning() => dropdownValue == serverName
+      ? server != null
+          ? server.isRunning
+          : false
+      : client != null
+          ? client.isRunning
+          : false;
 
   void startServer() async {
     dropdownEnabled = false;
-    server = ServerNode(name: "server", verbose: true);
+    server = ServerNode(
+      name: serverName,
+      verbose: true,
+      onDispose: onDispose,
+      clientDispose: clientDispose,
+    );
     await server.init();
     await server.onReady;
     setState(() {
@@ -59,9 +73,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void startClient() async {
     dropdownEnabled = false;
     client = ClientNode(
-      name: "client",
+      name: clientName,
       verbose: true,
-      port: 8085,
+      onDispose: onDispose,
     );
     await client.init();
     await client.onReady;
@@ -75,10 +89,33 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void onDispose() {
+    setState(() {
+      dropdownEnabled = true;
+      clientIPs = "";
+      clientStatus = dropdownValue == serverName
+          ? "Server not running"
+          : "Client not running";
+    });
+  }
+
+  void clientDispose(ConnectedClientNode c) async {
+    setState(() {
+      clientIPs = "";
+    });
+    for (final s in server.clientsConnected) {
+      setState(() {
+        clientIPs += "id=${s.name},IP=${s.address}\n";
+      });
+    }
+  }
+
   void findClients() async {
     server.discoverNodes();
     await Future<Object>.delayed(const Duration(seconds: 2));
-    clientIPs = "";
+    setState(() {
+      clientIPs = "";
+    });
     for (final s in server.clientsConnected) {
       setState(() {
         clientIPs += "id=${s.name},IP=${s.address}\n";
@@ -114,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     dropdownEnabled
-        ? dropdownValue == "Server"
+        ? dropdownValue == serverName
             ? disposeServer()
             : disposeClient()
         : print("Disposing");
@@ -123,102 +160,106 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> mainWidgets = [
+      DropdownButton<String>(
+        value: dropdownValue,
+        icon: Icon(Icons.arrow_downward),
+        iconSize: 24,
+        elevation: 16,
+        style: TextStyle(color: Colors.deepPurple),
+        underline: Container(
+          height: 2,
+          color: Colors.deepPurpleAccent,
+        ),
+        onChanged: (String newValue) {
+          if (dropdownEnabled) {
+            setState(() {
+              dropdownValue = newValue;
+            });
+          }
+        },
+        items: <String>[serverName, clientName]
+            .map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+      ),
+      dropdownValue == serverName
+          ? Column(
+              children: <Widget>[
+                Text(serverStatus),
+                RaisedButton(
+                  child: Text("Start Server"),
+                  onPressed: () => startServer(),
+                ),
+                RaisedButton(
+                  child: Text("Scan Clients"),
+                  onPressed: () => dropdownEnabled ? null : findClients(),
+                ),
+                Text(clientIPs),
+                TextField(
+                  decoration: InputDecoration(
+                      labelText: "Client to send data to",
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(20)),
+                  onChanged: (String text) {
+                    setState(() {
+                      clientToSend = text;
+                    });
+                  },
+                ),
+              ],
+            )
+          : Column(
+              children: <Widget>[
+                Text(clientStatus),
+                RaisedButton(
+                  child: Text("Start Client"),
+                  onPressed: () => startClient(),
+                ),
+              ],
+            ),
+    ];
+    List<Widget> bottomWidgets = [
+      TextField(
+        decoration: InputDecoration(
+            labelText: "Data to send",
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.all(20)),
+        onChanged: (String text) {
+          setState(() {
+            dataToSend = text;
+          });
+        },
+      ),
+      RaisedButton(
+        child: Text("Send Data"),
+        onPressed: () => dropdownEnabled
+            ? null
+            : dropdownValue == serverName
+                ? serverToClient(clientToSend)
+                : clientToServer(),
+      ),
+      Text(dataRecieved),
+      RaisedButton(
+        child: Text("Dispose $dropdownValue"),
+        onPressed: () => dropdownEnabled
+            ? null
+            : dropdownValue == serverName
+                ? disposeServer()
+                : disposeClient(),
+      ),
+    ];
+    if (isRunning()) mainWidgets.addAll(bottomWidgets);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
       body: Center(
         child: ListView(
-          children: <Widget>[
-            DropdownButton<String>(
-              value: dropdownValue,
-              icon: Icon(Icons.arrow_downward),
-              iconSize: 24,
-              elevation: 16,
-              style: TextStyle(color: Colors.deepPurple),
-              underline: Container(
-                height: 2,
-                color: Colors.deepPurpleAccent,
-              ),
-              onChanged: (String newValue) {
-                if (dropdownEnabled) {
-                  setState(() {
-                    dropdownValue = newValue;
-                  });
-                }
-              },
-              items: <String>["Server", "Client"]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-            ),
-            dropdownValue == "Server"
-                ? Column(
-                    children: <Widget>[
-                      Text(serverStatus),
-                      RaisedButton(
-                        child: Text("Start Server"),
-                        onPressed: () => startServer(),
-                      ),
-                      RaisedButton(
-                        child: Text("Scan Clients"),
-                        onPressed: () => dropdownEnabled ? null : findClients(),
-                      ),
-                      Text(clientIPs),
-                      TextField(
-                        decoration: InputDecoration(
-                            labelText: "Client to send data to",
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(20)),
-                        onChanged: (String text) {
-                          setState(() {
-                            clientToSend = text;
-                          });
-                        },
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: <Widget>[
-                      Text(clientStatus),
-                      RaisedButton(
-                        child: Text("Start Client"),
-                        onPressed: () => startClient(),
-                      ),
-                    ],
-                  ),
-            TextField(
-              decoration: InputDecoration(
-                  labelText: "Data to send",
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(20)),
-              onChanged: (String text) {
-                setState(() {
-                  dataToSend = text;
-                });
-              },
-            ),
-            RaisedButton(
-              child: Text("Send Data"),
-              onPressed: () => dropdownEnabled
-                  ? null
-                  : dropdownValue == "Server"
-                      ? serverToClient(clientToSend)
-                      : clientToServer(),
-            ),
-            Text(dataRecieved),
-            RaisedButton(
-              child: Text("Dispose $dropdownValue"),
-              onPressed: () => dropdownEnabled
-                  ? null
-                  : dropdownValue == "Server"
-                      ? disposeServer()
-                      : disposeClient(),
-            ),
-          ],
+          children: mainWidgets,
         ),
       ),
     );

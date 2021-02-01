@@ -54,9 +54,10 @@ abstract class _BaseNode {
   IsoHttpd _iso;
   RawDatagramSocket _socket;
   bool _isServer;
+  bool _debug = true; // TODO make false on any package releases
   int _socketPort;
   bool _isRunning = false;
-  Function onDispose = () {};
+  Function() onDispose = () {};
 
   final Completer<void> _socketReady = Completer<void>();
   final List<ConnectedClientNode> _clients = <ConnectedClientNode>[];
@@ -143,6 +144,17 @@ abstract class _BaseNode {
           print("Received: $data");
         }
       } else if (data is DataPacket) {
+        //print
+        if (_debug) print("----received $data");
+        //update last seen
+        if (_clients != null) {
+          for (int i = 0; i < _clients.length; i++) {
+            if (_clients[i].host == data.host) {
+              _clients[i].lastSeen = DateTime.now();
+              i = _clients.length;
+            }
+          }
+        }
         // Data in format as expected
         switch (data.title) {
           case _s.clientConnect:
@@ -164,16 +176,7 @@ abstract class _BaseNode {
             //packet recieved
             _.data("Recieved Packet: ${data.name} : ${data.payload}");
             _dataResponce.sink.add(data);
-            //update last seen
-            if (_clients != null) {
-              for (int i = 0; i < _clients.length; i++) {
-                if (_clients[i].address == data.host) {
-                  _clients[i].lastSeen = DateTime.now();
-                  i = _clients.length;
-                }
-              }
-              break;
-            }
+            break;
         }
       } else {
         // Data not in expected format
@@ -200,7 +203,10 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(dynamic data,
+  Future<void> sendData(String data, [String title = "no name", String to]) =>
+      _sendDataDynamic(data, title, to);
+
+  Future<void> _sendDataDynamic(dynamic data,
       [String title = "no name", String to]) async {
     assert(to != null);
     assert(data != null);
@@ -231,6 +237,8 @@ abstract class _BaseNode {
     Response response;
     final packet = DataPacket(
         host: host, port: port, name: name, title: title, payload: data);
+
+    if (_debug) print("----sending $packet");
     try {
       response = await _dio.post<Object>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
@@ -248,6 +256,7 @@ abstract class _BaseNode {
 
   /// To be run when the HTTP Server is no longer required
   void dispose() {
+    _isRunning = false;
     _dataResponce.close();
     _connectedClients.close();
     _socket.close();
@@ -255,6 +264,7 @@ abstract class _BaseNode {
     if (verbose) {
       print(_isServer ? "Server Disposed" : "Client Disposed");
     }
+    onDispose();
   }
 
   //
@@ -285,10 +295,10 @@ abstract class _BaseNode {
   void _handleGetNames(DataPacket data) {
     if (_isServer) {
       //return connected clients
-      sendData(_clients, _s.getClientNames, data.host);
+      _sendDataDynamic(_clients, _s.getClientNames, data.host);
     } else {
       //share to stream the connected clients
-      _connectedClients.sink.add(data.payload);
+      _connectedClients.sink.add(data._payload);
     }
   }
 
@@ -326,20 +336,7 @@ abstract class _BaseNode {
   }
 
   void _handleDisconnect(DataPacket data) {
-    if (_isServer) {
-      //should occur
-      //remove from client list
-      for (int i = 0; i < _clients.length; i++) {
-        if (_clients[i].address == data.host) {
-          //remove
-          _clients.removeAt(i);
-          i = _clients.length;
-        }
-      }
-
-      //tell the programmer that it's been removed
-      onDispose();
-    } else {
+    if (!_isServer) {
       if (verbose) _.error(_e.shouldNotReceive);
     }
   }
@@ -347,6 +344,8 @@ abstract class _BaseNode {
   void _handleDispose(DataPacket data) {
     if (!_isServer) {
       //should occur
+      //stop running so that it doesn't report back to server
+      _isRunning = false;
       this.dispose();
     } else {
       if (verbose) _.error(_e.shouldNotReceive);

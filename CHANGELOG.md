@@ -1,7 +1,9 @@
-## [2.0.0] - 27/01/2021
+## [2.0.0] - 01/02/2021
 
 * If a client is disposed it tells the server.
 * If a server is disposed all the clients are disposed as well.
+* There are also extra functions that can be called for if a client or server is disposed
+* The payload is now always a String to simplify the process
 
 ## [1.2.0] - 26/01/2021
 

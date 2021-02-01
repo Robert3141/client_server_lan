@@ -11,8 +11,11 @@ class ConnectedClientNode {
   /// The user assigned name of the connected client
   final String name;
 
-  /// The IP address of the connected client
+  /// The IP address of the connected client (includes the port)
   final String address;
+
+  /// The Host of the connected client (excludes the port)
+  String get host => this.address.split(":")[0];
 
   /// The time the connected client was last seen
   DateTime lastSeen;
@@ -25,15 +28,17 @@ class DataPacket {
       @required this.host,
       @required this.port,
       @required this.title,
-      this.payload,
-      this.to});
+      Object payload,
+      this.to}) {
+    this._payload = payload;
+  }
 
   DataPacket.fromJson(Map<String, Object> json)
       : this.host = json["host"],
         this.port = int.parse(json["port"]),
         this.name = json["name"],
         this.title = json["title"],
-        this.payload = json["payload"],
+        this._payload = json["payload"],
         this.to = json["to"];
 
   /// The IP adress of the sender
@@ -48,11 +53,13 @@ class DataPacket {
   /// The title of the packet
   final String title;
 
-  /// The actual data being ditributed
-  final Object payload;
+  Object _payload;
 
   /// The destination IP of the packet
   final String to;
+
+  /// The actual data being ditributed
+  String get payload => _payload.toString();
 
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() =>

@@ -27,7 +27,7 @@ class ClientNode extends _BaseClientNode {
 
   /// This function is called when the node has been force disposed (usually as a result of dispose being called on the server)
   @override
-  Function onDispose;
+  Function() onDispose;
 
   /// Used to setup the Node ready for use
   Future<void> init() async {
@@ -101,10 +101,9 @@ abstract class _BaseClientNode with _BaseNode {
 
   @override
   void dispose() async {
-    // tell server that this client has been disposed
-    onDispose();
+    // tell server client has been disposed
     if (isRunning && _server != null)
-      await _sendInfo("client_disconnect", _server.address);
+      await _sendInfo(_s.clientDisconnect, _server.address);
     super.dispose();
   }
 }
