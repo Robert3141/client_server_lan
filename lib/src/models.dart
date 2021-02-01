@@ -1,11 +1,23 @@
 part of 'basenode.dart';
 
+/// The data stored about the specific that is connected. This includes the name, IP address and time last seen. Most useful for indexing the client names rather than displaying than getting the user to enter raw IP adresses.
 class ConnectedClientNode {
   ConnectedClientNode(
-      {@required this.name, @required this.address, this.lastSeen});
+      {@required String name, @required String address, DateTime lastSeen})
+      : this.name = name,
+        this.address = address,
+        this.lastSeen = lastSeen ?? DateTime.now();
 
+  /// The user assigned name of the connected client
   final String name;
+
+  /// The IP address of the connected client (includes the port)
   final String address;
+
+  /// The Host of the connected client (excludes the port)
+  String get host => this.address.split(":")[0];
+
+  /// The time the connected client was last seen
   DateTime lastSeen;
 }
 
@@ -16,14 +28,18 @@ class DataPacket {
       @required this.host,
       @required this.port,
       @required this.title,
-      this.payload});
+      Object payload,
+      this.to}) {
+    this._payload = payload;
+  }
 
   DataPacket.fromJson(Map<String, Object> json)
       : this.host = json["host"],
         this.port = int.parse(json["port"]),
         this.name = json["name"],
         this.title = json["title"],
-        this.payload = json["payload"];
+        this._payload = json["payload"],
+        this.to = json["to"];
 
   /// The IP adress of the sender
   final String host;
@@ -37,12 +53,17 @@ class DataPacket {
   /// The title of the packet
   final String title;
 
+  Object _payload;
+
+  /// The destination IP of the packet
+  final String to;
+
   /// The actual data being ditributed
-  final String payload;
+  String get payload => _payload.toString();
 
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() =>
-      '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload"}';
+      '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload", "to": "$to"}';
 
   @override
   String toString() => encodeToString();

@@ -3,14 +3,11 @@ part of 'basenode.dart';
 /// The Node for if the device is to act as a client (i.e wait for server to connect to it). It can only communicate with the server. Additional work needs to be added in order to facilitate data forwarding.
 class ClientNode extends _BaseClientNode {
   ClientNode(
-      {@required this.name, this.host, this.port = 8084, this.verbose = false})
-      : assert(name != null) {
-    if (Platform.isAndroid || Platform.isIOS) {
-      if (host == null) {
-        throw ArgumentError("Please provide a host");
-      }
-    }
-  }
+      {@required this.name,
+      this.port = 8084,
+      this.verbose = false,
+      this.onDispose})
+      : assert(name != null);
 
   /// The name of the node on the network
   @override
@@ -28,16 +25,28 @@ class ClientNode extends _BaseClientNode {
   @override
   bool verbose;
 
+  /// This function is called when the node has been force disposed (usually as a result of dispose being called on the server)
+  @override
+  Function() onDispose;
+
   /// Used to setup the Node ready for use
-  Future<void> init({String ip, bool start = true}) async {
-    ip ??= host;
-    ip ??= await _getHost();
-    await _initClientNode(ip, start: start);
+  Future<void> init() async {
+    //change host
+    if (Platform.isAndroid || Platform.isIOS) {
+      this.host = await Wifi.ip;
+    } else {
+      try {
+        this.host = await _getHost();
+      } catch (e) {
+        throw ("Unable to get local IP address on platform error: $e");
+      }
+    }
+    await _initClientNode(this.host, start: true);
   }
 }
 
 abstract class _BaseClientNode with _BaseNode {
-  BaseClientNode() {
+  _BaseClientNode() {
     _isServer = false;
   }
 
@@ -77,19 +86,24 @@ abstract class _BaseClientNode with _BaseNode {
             "Recieved connection request from Client ${data["host"]}:${data["port"]}");
       }
       final String addr = "${data["host"]}:${data["port"]}";
-      await _sendInfo("client_connect", addr);
+      await _sendInfo(_s.clientConnect, addr);
     });
   }
 
+  Future<List<ConnectedClientNode>> getConnectedClients() async {
+    _sendInfo(_s.getClientNames, serverDetails.address);
+    return await _connectedClients.stream.first;
+  }
+
   @override
-  Future<void> sendData(String title, Object data, [String to]) =>
-      super.sendData(title, data, to ?? this.serverDetails.address);
+  Future<void> sendData(Object data, [String title = "no name", String to]) =>
+      super.sendData(data, title, to ?? this.serverDetails.address);
 
   @override
   void dispose() async {
-    // tell server that this client has been disposed
+    // tell server client has been disposed
     if (isRunning && _server != null)
-      await _sendInfo("client_disconnect", _server.address);
+      await _sendInfo(_s.clientDisconnect, _server.address);
     super.dispose();
   }
 }

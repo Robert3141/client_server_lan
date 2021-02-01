@@ -42,7 +42,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.2.0"
+    version: "2.0.0"
   clock:
     dependency: transitive
     description:
@@ -77,7 +77,7 @@ packages:
       name: dio
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.9"
+    version: "3.0.10"
   emodebug:
     dependency: transitive
     description:
@@ -157,7 +157,7 @@ packages:
       name: mime
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.9.6+3"
+    version: "0.9.7"
   path:
     dependency: transitive
     description:
@@ -171,7 +171,7 @@ packages:
       name: pedantic
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.9.0"
+    version: "1.9.2"
   sky_engine:
     dependency: transitive
     description: flutter
