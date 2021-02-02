@@ -6,8 +6,9 @@ class ClientNode extends _BaseClientNode {
       {@required this.name,
       this.port = 8084,
       this.verbose = false,
-      this.onDispose})
-      : assert(name != null);
+      this.onDispose}) {
+    if (name == null || name == "") throw _e.nameNull;
+  }
 
   /// The name of the node on the network
   @override
@@ -38,7 +39,8 @@ class ClientNode extends _BaseClientNode {
       try {
         this.host = await _getHost();
       } catch (e) {
-        throw ("Unable to get local IP address on platform error: $e");
+        if (_debug) print("$e");
+        throw _e.platformNotSupported;
       }
     }
     await _initClientNode(this.host, start: true);
