@@ -63,7 +63,7 @@ abstract class _BaseNode {
   IsoHttpd _iso;
   RawDatagramSocket _socket;
   bool _isServer;
-  bool _debug = true; // TODO make false on any package releases
+  bool _debug = false; // TODO make false on any package releases
   int _socketPort;
   bool _isRunning = false;
   Function() onDispose = () {};
