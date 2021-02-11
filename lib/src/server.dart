@@ -7,8 +7,9 @@ class ServerNode extends _BaseServerNode {
       this.port = 8084,
       this.verbose = false,
       this.onDispose,
-      this.clientDispose})
-      : assert(name != null);
+      this.clientDispose}) {
+    if (name == null || name == "") throw _e.nameNull;
+  }
 
   /// The name of the node on the network
   @override
@@ -43,7 +44,8 @@ class ServerNode extends _BaseServerNode {
       try {
         this.host = await _getHost();
       } catch (e) {
-        throw ("Unable to get local IP address on platform error: $e");
+        if (_debug) print("$e");
+        throw _e.platformNotSupported;
       }
     }
     await _initServerNode(this.host, start: true);

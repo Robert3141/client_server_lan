@@ -5,8 +5,6 @@
 
 A LAN communication Flutter package based off [Node Commander](https://github.com/synw/nodecommander) but removing parts such as Commander Nodes and making communication between client and server two way.
 
-ONLY SUPPORTS ANDROID AT THE MOMENT!!!
-
 ## Usage
 ### Add to android files
 
@@ -39,15 +37,14 @@ Start a Server Node
 
 ```dart
 import 'dart:async';
-import 'package:wifi/wifi.dart';
 import 'package:client_server_lan/client_server_lan.dart';
+ServerNode server;
 void startServer() async {
-    String ip = await Wifi.ip;
     server = ServerNode(
-      name: "Server",
-      verbose: true,
-      host: ip,
-      port: 8085,
+      name: "server_name",//any text name
+      verbose: true,//output for debugging purposes
+      onDispose: onDispose,//function run on server disposed
+      clientDispose: clientDispose,//function run on client dispose
     );
     await server.init();
     await server.onReady;
@@ -56,22 +53,21 @@ void startServer() async {
     });
     server.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.payload;
+        String dataRecieved = data.payload;
       });
     });
-  }
 ```
 Start a Client Node
 
 ```dart
+import 'dart:async';
+import 'package:client_server_lan/client_server_lan.dart';
+ClientNode client;
 void startClient() async {
-    dropdownEnabled = false;
-    String ip = await Wifi.ip;
     client = ClientNode(
-      name: "Client Node",
-      verbose: true,
-      host: ip,
-      port: 8085,
+      name: clientName,//any text name
+      verbose: true,//output for debugging purposes
+      onDispose: onDispose,//function run on client dispose
     );
     await client.init();
     await client.onReady;
@@ -80,7 +76,7 @@ void startClient() async {
     });
     client.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.payload;
+        String dataRecieved = data.payload;
       });
     });
   }
@@ -91,7 +87,10 @@ Server scan for Clients
 void findClients() async {
     server.discoverNodes();
     await Future<Object>.delayed(const Duration(seconds: 2));
-    clientIPs = "";
+    //outputs client names and IPs (not neccessary)
+    setState(() {
+      clientIPs = "";
+    });
     for (final s in server.clientsConnected) {
       setState(() {
         clientIPs += "id=${s.name},IP=${s.address}\n";
@@ -107,16 +106,16 @@ WARNING: Data not excepted with titles in `client.internalTitles`/`server.intern
 Transfer from Client to Server
 
 ```dart
-void clientToServer() async {
-    await client.sendData("userInfo",dataToSend, client.serverDetails.address);
+void clientToServer(String dataToSend) async {
+    await client.sendData(dataToSend, "userInfo");
   }
 ```
 
 Transfer from Server to Client
 
 ```dart
-void serverToClient(String clientName) async {
+void serverToClient(String dataToSend, String clientName) async {
     final String client = server.clientUri(clientName);
-    await server.sendData("userInfo",dataToSend, client);
+    await server.sendData(dataToSend, "userInfo", client);
   }
 ```

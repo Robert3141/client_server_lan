@@ -26,6 +26,15 @@ class _e {
   static const String noResponse = "no response";
   static const String shouldNotReceive =
       "this node should not have received this command";
+  static ArgumentError addressNull =
+      ArgumentError("The address cannot be null");
+  static ArgumentError dataNull = ArgumentError("The data cannot be null");
+  static ArgumentError nameNull =
+      ArgumentError("The name of the node cannot be null or empty");
+  static ArgumentError titleInternal = ArgumentError(
+      "The title cannot be used as it is an internal title. Full list of titles: ${_s.titles}");
+  static UnsupportedError platformNotSupported =
+      UnsupportedError("Unable to optain the local IP address of this device");
 }
 
 // Strings for internal commands
@@ -54,7 +63,7 @@ abstract class _BaseNode {
   IsoHttpd _iso;
   RawDatagramSocket _socket;
   bool _isServer;
-  bool _debug = true; // TODO make false on any package releases
+  bool _debug = false; // TODO make false on any package releases
   int _socketPort;
   bool _isRunning = false;
   Function() onDispose = () {};
@@ -208,9 +217,9 @@ abstract class _BaseNode {
 
   Future<void> _sendDataDynamic(dynamic data,
       [String title = "no name", String to]) async {
-    assert(to != null);
-    assert(data != null);
-    assert(!_s.titles.contains(title));
+    if (to == null) throw _e.addressNull;
+    if (data == null) throw _e.dataNull;
+    if (_s.titles.contains(title)) throw _e.titleInternal;
 
     if (verbose) {
       _.smallArrowOut("Sending data $data to $to");
@@ -232,7 +241,7 @@ abstract class _BaseNode {
 
   Future<Response> _sendData(
       String title, String data, String to, String endPoint) async {
-    assert(to != null);
+    if (to == null) throw _e.addressNull;
     final uri = "http://$to$endPoint";
     Response response;
     final packet = DataPacket(

@@ -1,3 +1,8 @@
+## [2.0.1] - 11/02/2021
+
+* Updated packages hoping to fix a dio error
+* Updated README to reflect package better including the fact that more platforms are supported
+
 ## [2.0.0] - 01/02/2021
 
 * If a client is disposed it tells the server.
