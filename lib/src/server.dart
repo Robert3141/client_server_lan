@@ -39,7 +39,7 @@ class ServerNode extends _BaseServerNode {
   Future<void> init() async {
     //change host
     if (Platform.isAndroid || Platform.isIOS) {
-      this.host = await Wifi.ip;
+      this.host = await GetIp.ipAddress;
     } else {
       try {
         this.host = await _getHost();

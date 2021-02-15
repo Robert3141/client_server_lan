@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:get_ip/get_ip.dart';
 import 'package:isohttpd/isohttpd.dart';
 import 'package:meta/meta.dart';
 import 'package:emodebug/emodebug.dart';
-import 'package:wifi/wifi.dart';
 
 part 'server.dart';
 part 'client.dart';
