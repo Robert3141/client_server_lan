@@ -37,9 +37,9 @@ class _MyHomePageState extends State<MyHomePage> {
   bool dropdownEnabled = true;
   String serverStatus = "Server not running";
   String clientStatus = "Client not running";
-  String clientIPs = "No devcies connected";
+  String clientIPs = "No devices connected";
   String dataToSend = "Testing 1 2 3";
-  String dataRecieved = "No response yet...";
+  String dataReceived = "No response yet...";
   String clientToSend = clientName;
   String dropdownValue = serverName;
   bool isRunning() => dropdownValue == serverName
@@ -65,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     server.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataRecieved = data.payload;
+        dataReceived = data.payload;
       });
     });
   }
@@ -76,6 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       name: clientName,
       verbose: true,
       onDispose: onDispose,
+      onServerAlreadyExist: onServerAlreadyExist,
     );
     await client.init();
     await client.onReady;
@@ -83,8 +84,9 @@ class _MyHomePageState extends State<MyHomePage> {
       clientStatus = "Client ready on ${client.host}:${client.port}";
     });
     client.dataResponse.listen((DataPacket data) {
+      print("LISTENDATARESPONSE $data");
       setState(() {
-        dataRecieved = data.payload;
+        dataReceived = data.payload;
       });
     });
   }
@@ -97,6 +99,10 @@ class _MyHomePageState extends State<MyHomePage> {
           ? "Server not running"
           : "Client not running";
     });
+  }
+
+  void onServerAlreadyExist(String host) {
+    print("Server already exist on $host");
   }
 
   void clientDispose(ConnectedClientNode c) async {
@@ -130,6 +136,10 @@ class _MyHomePageState extends State<MyHomePage> {
   void serverToClient(String clientName) async {
     final String client = server.clientUri(clientName);
     await server.sendData(dataToSend, "userInfo", client);
+  }
+
+  void connectedNodes() async {
+    client.discoverServerNode();
   }
 
   void disposeClient() {
@@ -242,7 +252,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ? serverToClient(clientToSend)
                 : clientToServer(),
       ),
-      Text(dataRecieved),
+      Text(dataReceived),
       RaisedButton(
         child: Text("Dispose $dropdownValue"),
         onPressed: () => dropdownEnabled
@@ -250,6 +260,11 @@ class _MyHomePageState extends State<MyHomePage> {
             : dropdownValue == serverName
                 ? disposeServer()
                 : disposeClient(),
+      ),
+      SizedBox(height: 20),
+      RaisedButton(
+        child: Text("Connected Clients"),
+        onPressed: () => dropdownEnabled ? null : connectedNodes(),
       ),
     ];
     if (isRunning()) mainWidgets.addAll(bottomWidgets);

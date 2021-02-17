@@ -45,6 +45,8 @@ class _s {
   static const String forwardData = "forward_data";
   static const String clientDisconnect = "client_disconnect";
   static const String clientDispose = "client_dispose";
+  static const String checkServerExist = "check_server_already_exist";
+  static const String imAlreadyServer = "im_already_server";
 
   //list of all these strings
   static const List<String> titles = [
@@ -52,7 +54,9 @@ class _s {
     getClientNames,
     forwardData,
     clientDisconnect,
-    clientDispose
+    clientDispose,
+    checkServerExist,
+    imAlreadyServer,
   ];
 }
 
@@ -67,6 +71,7 @@ abstract class _BaseNode {
   int _socketPort;
   bool _isRunning = false;
   Function() onDispose = () {};
+  Function(String) onServerAlreadyExist = (host) {};
 
   final Completer<void> _socketReady = Completer<void>();
   final List<ConnectedClientNode> _clients = <ConnectedClientNode>[];
@@ -77,7 +82,8 @@ abstract class _BaseNode {
   final StreamController<List<ConnectedClientNode>> _connectedClients =
       StreamController<List<ConnectedClientNode>>.broadcast();
 
-  /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
+  /// Debug print outputs of the data being received or sent.
+  /// This is primarily for use in the debug development phase
   bool verbose;
 
   /// The way to access the status of the HTTP Listener
@@ -182,8 +188,8 @@ abstract class _BaseNode {
             _handleGetNames(data);
             break;
           default:
-            //packet recieved
-            _.data("Recieved Packet: ${data.name} : ${data.payload}");
+            //packet Received
+            _.data("Received Packet: ${data.name} : ${data.payload}");
             _dataResponce.sink.add(data);
             break;
         }
@@ -233,6 +239,8 @@ abstract class _BaseNode {
 
   Future<void> _sendInfo(String title, String to) async {
     final response = await _sendData(title, null, to, _suffix);
+    print(
+        "RESPONSE SENDINFO $title, $to: ${response.statusCode} ${response.data}");
     if (response == null || response.statusCode != HttpStatus.ok) {
       final ecode = response?.statusCode ?? _e.noResponse;
       _.warning("Error sending the info response: $ecode");
@@ -339,7 +347,7 @@ abstract class _BaseNode {
       }
     } else {
       // The client recieves the packet
-      _.data("Recieved Packet: ${data.name} : ${data.payload}");
+      _.data("Received Packet: ${data.name} : ${data.payload}");
       _dataResponce.sink.add(data);
     }
   }

@@ -1,12 +1,16 @@
 part of 'basenode.dart';
 
-/// The Node for if the device is to act as a client (i.e wait for server to connect to it). It can only communicate with the server. Additional work needs to be added in order to facilitate data forwarding.
+/// The Node for if the device is to act as a client (i.e wait for server to connect to it).
+/// It can only communicate with the server.
+/// Additional work needs to be added in order to facilitate data forwarding.
 class ClientNode extends _BaseClientNode {
-  ClientNode(
-      {@required this.name,
-      this.port = 8084,
-      this.verbose = false,
-      this.onDispose}) {
+  ClientNode({
+    @required this.name,
+    this.port = 8084,
+    this.verbose = false,
+    this.onDispose,
+    this.onServerAlreadyExist,
+  }) {
     if (name == null || name == "") throw _e.nameNull;
   }
 
@@ -29,6 +33,9 @@ class ClientNode extends _BaseClientNode {
   /// This function is called when the node has been force disposed (usually as a result of dispose being called on the server)
   @override
   Function() onDispose;
+
+  @override
+  Function(String) onServerAlreadyExist;
 
   /// Used to setup the Node ready for use
   Future<void> init() async {
@@ -57,6 +64,8 @@ abstract class _BaseClientNode with _BaseNode {
   /// Provides information about the server if one is connected
   ConnectedClientNode get serverDetails => _server;
 
+  Future<void> discoverServerNode() async => _broadcastCheckServerExistance();
+
   Future<void> _initClientNode(String host, {@required bool start}) async {
     await _initNode(host, false, start: start);
     await _listenForDiscovery();
@@ -79,17 +88,41 @@ abstract class _BaseClientNode with _BaseNode {
       }
       final message = utf8.decode(d.data).trim();
       final dynamic data = json.decode(message);
-      _server = ConnectedClientNode(
-          address: "${data["host"]}:${data["port"]}",
-          name: data["name"].toString(),
-          lastSeen: DateTime.now());
-      if (verbose) {
-        print(
-            "Recieved connection request from Client ${data["host"]}:${data["port"]}");
+
+      // Listen only from other adresses.
+      if (data["host"].toString() != host) {
+        _server = ConnectedClientNode(
+            address: "${data["host"]}:${data["port"]}",
+            name: data["name"].toString(),
+            lastSeen: DateTime.now());
+        if (verbose) {
+          print("Received connection request from Client $data");
+        }
+        final String addr = "${data["host"]}:${data["port"]}";
+
+        if (data["title"] == _s.imAlreadyServer) {
+          onServerAlreadyExist(data["host"]);
+        } else {
+          await _sendInfo(_s.clientConnect, addr);
+        }
       }
-      final String addr = "${data["host"]}:${data["port"]}";
-      await _sendInfo(_s.clientConnect, addr);
     });
+  }
+
+  Future<void> _broadcastCheckServerExistance() async {
+    assert(host != null);
+    await _socketReady.future;
+    final payload = DataPacket(
+            host: host, port: port, name: name, title: _s.checkServerExist)
+        .encodeToString();
+    final data = utf8.encode(payload);
+    String broadcastAddr;
+    final l = host.split(".");
+    broadcastAddr = "${l[0]}.${l[1]}.${l[2]}.255";
+    if (verbose) {
+      print("Broadcasting to $broadcastAddr: $payload");
+    }
+    _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
 
   Future<List<ConnectedClientNode>> getConnectedClients() async {
