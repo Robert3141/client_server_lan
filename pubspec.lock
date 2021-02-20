@@ -58,7 +58,7 @@ packages:
     source: hosted
     version: "1.2.0"
   flutter:
-    dependency: transitive
+    dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
@@ -112,7 +112,7 @@ packages:
     source: hosted
     version: "1.8.0"
   pedantic:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: pedantic
       url: "https://pub.dartlang.org"
