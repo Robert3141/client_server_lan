@@ -32,14 +32,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   ServerNode server;
   ClientNode client;
-  static const String clientName = "client";
-  static const String serverName = "server";
+  static const String clientName = 'client';
+  static const String serverName = 'server';
   bool dropdownEnabled = true;
-  String serverStatus = "Server not running";
-  String clientStatus = "Client not running";
-  String clientIPs = "No devcies connected";
-  String dataToSend = "Testing 1 2 3";
-  String dataRecieved = "No response yet...";
+  String serverStatus = 'Server not running';
+  String clientStatus = 'Client not running';
+  String clientIPs = 'No devcies connected';
+  String dataToSend = 'Testing 1 2 3';
+  String dataRecieved = 'No response yet...';
   String clientToSend = clientName;
   String dropdownValue = serverName;
   bool isRunning() => dropdownValue == serverName
@@ -61,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await server.init();
     await server.onReady;
     setState(() {
-      serverStatus = "Server ready on ${server.host}:${server.port}";
+      serverStatus = 'Server ready on ${server.host}:${server.port}';
     });
     server.dataResponse.listen((DataPacket data) {
       setState(() {
@@ -80,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await client.init();
     await client.onReady;
     setState(() {
-      clientStatus = "Client ready on ${client.host}:${client.port}";
+      clientStatus = 'Client ready on ${client.host}:${client.port}';
     });
     client.dataResponse.listen((DataPacket data) {
       setState(() {
@@ -92,50 +92,50 @@ class _MyHomePageState extends State<MyHomePage> {
   void onDispose() {
     setState(() {
       dropdownEnabled = true;
-      clientIPs = "";
+      clientIPs = '';
       clientStatus = dropdownValue == serverName
-          ? "Server not running"
-          : "Client not running";
+          ? 'Server not running'
+          : 'Client not running';
     });
   }
 
   void clientDispose(ConnectedClientNode c) async {
     setState(() {
-      clientIPs = "";
+      clientIPs = '';
     });
     for (final s in server.clientsConnected) {
       setState(() {
-        clientIPs += "id=${s.name},IP=${s.address}\n";
+        clientIPs += 'id=${s.name},IP=${s.address}\n';
       });
     }
   }
 
   void findClients() async {
-    server.discoverNodes();
+    await server.discoverNodes();
     await Future<Object>.delayed(const Duration(seconds: 2));
     setState(() {
-      clientIPs = "";
+      clientIPs = '';
     });
     for (final s in server.clientsConnected) {
       setState(() {
-        clientIPs += "id=${s.name},IP=${s.address}\n";
+        clientIPs += 'id=${s.name},IP=${s.address}\n';
       });
     }
   }
 
   void clientToServer() async {
-    await client.sendData(dataToSend, "userInfo");
+    await client.sendData(dataToSend, 'userInfo');
   }
 
   void serverToClient(String clientName) async {
-    final String client = server.clientUri(clientName);
-    await server.sendData(dataToSend, "userInfo", client);
+    var client = server.clientUri(clientName);
+    await server.sendData(dataToSend, 'userInfo', client);
   }
 
   void disposeClient() {
     client.dispose();
     setState(() {
-      clientStatus = "Client not running";
+      clientStatus = 'Client not running';
     });
     dropdownEnabled = true;
   }
@@ -143,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void disposeServer() {
     server.dispose();
     setState(() {
-      serverStatus = "Server not running";
+      serverStatus = 'Server not running';
     });
     dropdownEnabled = true;
   }
@@ -154,13 +154,13 @@ class _MyHomePageState extends State<MyHomePage> {
         ? dropdownValue == serverName
             ? disposeServer()
             : disposeClient()
-        : print("Disposing");
+        : print('Disposing');
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> mainWidgets = [
+    var mainWidgets = [
       DropdownButton<String>(
         value: dropdownValue,
         icon: Icon(Icons.arrow_downward),
@@ -191,17 +191,17 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 Text(serverStatus),
                 RaisedButton(
-                  child: Text("Start Server"),
+                  child: Text('Start Server'),
                   onPressed: () => startServer(),
                 ),
                 RaisedButton(
-                  child: Text("Scan Clients"),
+                  child: Text('Scan Clients'),
                   onPressed: () => dropdownEnabled ? null : findClients(),
                 ),
                 Text(clientIPs),
                 TextField(
                   decoration: InputDecoration(
-                      labelText: "Client to send data to",
+                      labelText: 'Client to send data to',
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.all(20)),
                   onChanged: (String text) {
@@ -216,16 +216,16 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 Text(clientStatus),
                 RaisedButton(
-                  child: Text("Start Client"),
+                  child: Text('Start Client'),
                   onPressed: () => startClient(),
                 ),
               ],
             ),
     ];
-    List<Widget> bottomWidgets = [
+    var bottomWidgets = [
       TextField(
         decoration: InputDecoration(
-            labelText: "Data to send",
+            labelText: 'Data to send',
             border: InputBorder.none,
             contentPadding: EdgeInsets.all(20)),
         onChanged: (String text) {
@@ -235,7 +235,7 @@ class _MyHomePageState extends State<MyHomePage> {
         },
       ),
       RaisedButton(
-        child: Text("Send Data"),
+        child: Text('Send Data'),
         onPressed: () => dropdownEnabled
             ? null
             : dropdownValue == serverName
@@ -244,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       Text(dataRecieved),
       RaisedButton(
-        child: Text("Dispose $dropdownValue"),
+        child: Text('Dispose $dropdownValue'),
         onPressed: () => dropdownEnabled
             ? null
             : dropdownValue == serverName
