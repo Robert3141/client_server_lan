@@ -42,14 +42,14 @@ packages:
       name: dio
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.9"
+    version: "3.0.10"
   emodebug:
     dependency: "direct main"
     description:
       name: emodebug
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   extra_pedantic:
     dependency: transitive
     description:
@@ -89,7 +89,7 @@ packages:
       name: isohttpd
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   meta:
     dependency: "direct main"
     description:
@@ -110,14 +110,14 @@ packages:
       name: path
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.6.4"
+    version: "1.8.0"
   pedantic:
     dependency: transitive
     description:
       name: pedantic
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.9.0"
+    version: "1.10.0"
   sky_engine:
     dependency: transitive
     description: flutter
