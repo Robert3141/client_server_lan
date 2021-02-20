@@ -7,7 +7,7 @@ class ClientNode extends _BaseClientNode {
       this.port = 8084,
       this.verbose = false,
       this.onDispose}) {
-    if (name == null || name == "") throw _e.nameNull;
+    if (name == null || name == '') throw _e.nameNull;
   }
 
   /// The name of the node on the network
@@ -34,16 +34,16 @@ class ClientNode extends _BaseClientNode {
   Future<void> init() async {
     //change host
     if (Platform.isAndroid || Platform.isIOS) {
-      this.host = await Wifi.ip;
+      host = await Wifi.ip;
     } else {
       try {
-        this.host = await _getHost();
+        host = await _getHost();
       } catch (e) {
-        if (_debug) print("$e");
+        if (_debug) print('$e');
         throw _e.platformNotSupported;
       }
     }
-    await _initClientNode(this.host, start: true);
+    await _initClientNode(host, start: true);
   }
 }
 
@@ -70,7 +70,7 @@ abstract class _BaseClientNode with _BaseNode {
     assert(_socket != null);
     await _socketReady.future;
     if (verbose) {
-      print("Listening on socket ${_socket.address.host}:$_socketPort");
+      print('Listening on socket ${_socket.address.host}:$_socketPort');
     }
     _socket.listen((RawSocketEvent e) async {
       final d = _socket.receive();
@@ -80,32 +80,33 @@ abstract class _BaseClientNode with _BaseNode {
       final message = utf8.decode(d.data).trim();
       final dynamic data = json.decode(message);
       _server = ConnectedClientNode(
-          address: "${data["host"]}:${data["port"]}",
-          name: data["name"].toString(),
+          address: '${data['host']}:${data['port']}',
+          name: data['name'].toString(),
           lastSeen: DateTime.now());
       if (verbose) {
         print(
-            "Recieved connection request from Client ${data["host"]}:${data["port"]}");
+            'Recieved connection request from Client ${data['host']}:${data['port']}');
       }
-      final String addr = "${data["host"]}:${data["port"]}";
+      var addr = '${data['host']}:${data['port']}';
       await _sendInfo(_s.clientConnect, addr);
     });
   }
 
   Future<List<ConnectedClientNode>> getConnectedClients() async {
-    _sendInfo(_s.getClientNames, serverDetails.address);
+    await _sendInfo(_s.getClientNames, serverDetails.address);
     return await _connectedClients.stream.first;
   }
 
   @override
-  Future<void> sendData(Object data, [String title = "no name", String to]) =>
-      super.sendData(data, title, to ?? this.serverDetails.address);
+  Future<void> sendData(Object data, [String title = 'no name', String to]) =>
+      super.sendData(data, title, to ?? serverDetails.address);
 
   @override
   void dispose() async {
     // tell server client has been disposed
-    if (isRunning && _server != null)
+    if (isRunning && _server != null) {
       await _sendInfo(_s.clientDisconnect, _server.address);
+    }
     super.dispose();
   }
 }

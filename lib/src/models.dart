@@ -15,7 +15,7 @@ class ConnectedClientNode {
   final String address;
 
   /// The Host of the connected client (excludes the port)
-  String get host => this.address.split(":")[0];
+  String get host => this.address.split(':')[0];
 
   /// The time the connected client was last seen
   DateTime lastSeen;
@@ -34,12 +34,12 @@ class DataPacket {
   }
 
   DataPacket.fromJson(Map<String, Object> json)
-      : this.host = json["host"],
-        this.port = int.parse(json["port"]),
-        this.name = json["name"],
-        this.title = json["title"],
-        this._payload = json["payload"],
-        this.to = json["to"];
+      : this.host = json['host'],
+        this.port = int.parse(json['port']),
+        this.name = json['name'],
+        this.title = json['title'],
+        this._payload = json['payload'],
+        this.to = json['to'];
 
   /// The IP adress of the sender
   final String host;
@@ -76,7 +76,7 @@ Future<HttpResponse> _responseHandler(
   try {
     c = json.decode(c);
   } catch (e) {
-    print("Json not decoded: $e");
+    print('Json not decoded: $e');
   }
   log.push(c);
   request.response.statusCode = HttpStatus.ok;

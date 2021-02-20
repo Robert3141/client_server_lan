@@ -8,7 +8,7 @@ class ServerNode extends _BaseServerNode {
       this.verbose = false,
       this.onDispose,
       this.clientDispose}) {
-    if (name == null || name == "") throw _e.nameNull;
+    if (name == null || name == '') throw _e.nameNull;
   }
 
   /// The name of the node on the network
@@ -39,16 +39,16 @@ class ServerNode extends _BaseServerNode {
   Future<void> init() async {
     //change host
     if (Platform.isAndroid || Platform.isIOS) {
-      this.host = await Wifi.ip;
+      host = await Wifi.ip;
     } else {
       try {
-        this.host = await _getHost();
+        host = await _getHost();
       } catch (e) {
-        if (_debug) print("$e");
+        if (_debug) print('$e');
         throw _e.platformNotSupported;
       }
     }
-    await _initServerNode(this.host, start: true);
+    await _initServerNode(host, start: true);
   }
 }
 
@@ -104,10 +104,10 @@ abstract class _BaseServerNode with _BaseNode {
             .encodeToString();
     final data = utf8.encode(payload);
     String broadcastAddr;
-    final l = host.split(".");
-    broadcastAddr = "${l[0]}.${l[1]}.${l[2]}.255";
+    final l = host.split('.');
+    broadcastAddr = '${l[0]}.${l[1]}.${l[2]}.255';
     if (verbose) {
-      print("Broadcasting to $broadcastAddr: $payload");
+      print('Broadcasting to $broadcastAddr: $payload');
     }
     _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
@@ -115,10 +115,11 @@ abstract class _BaseServerNode with _BaseNode {
   @override
   void dispose() async {
     //tell all the clients to dispose
-    if (_clients != null && _isRunning)
-      for (ConnectedClientNode c in _clients) {
+    if (_clients != null && _isRunning) {
+      for (var c in _clients) {
         await _sendInfo(_s.clientDispose, c.address);
       }
+    }
     super.dispose();
   }
 
@@ -128,15 +129,15 @@ abstract class _BaseServerNode with _BaseNode {
     ConnectedClientNode client;
     //should occur
     //remove from client list
-    for (int i = 0; i < _clients.length; i++) {
+    for (var i = 0; i < _clients.length; i++) {
       if (_clients[i].host == data.host) {
         //remove
         client = _clients.removeAt(i);
         i = _clients.length;
       }
     }
-    if (_debug) print("disconnected client $client");
-    if (_debug) print("clients connected ${_clients.length}");
+    if (_debug) print('disconnected client $client');
+    if (_debug) print('clients connected ${_clients.length}');
 
     //tell the programmer that it's been removed
     clientDispose(client);
