@@ -4,9 +4,9 @@ part of 'basenode.dart';
 class ConnectedClientNode {
   ConnectedClientNode(
       {@required String name, @required String address, DateTime lastSeen})
-      : this.name = name,
-        this.address = address,
-        this.lastSeen = lastSeen ?? DateTime.now();
+      : name = name,
+        address = address,
+        lastSeen = lastSeen ?? DateTime.now();
 
   /// The user assigned name of the connected client
   final String name;
@@ -15,7 +15,7 @@ class ConnectedClientNode {
   final String address;
 
   /// The Host of the connected client (excludes the port)
-  String get host => this.address.split(':')[0];
+  String get host => address.split(':')[0];
 
   /// The time the connected client was last seen
   DateTime lastSeen;
@@ -30,16 +30,16 @@ class DataPacket {
       @required this.title,
       Object payload,
       this.to}) {
-    this._payload = payload;
+    _payload = payload;
   }
 
   DataPacket.fromJson(Map<String, Object> json)
-      : this.host = json['host'],
-        this.port = int.parse(json['port']),
-        this.name = json['name'],
-        this.title = json['title'],
-        this._payload = json['payload'],
-        this.to = json['to'];
+      : host = json['host'],
+        port = int.parse(json['port']),
+        name = json['name'],
+        title = json['title'],
+        _payload = json['payload'],
+        to = json['to'];
 
   /// The IP adress of the sender
   final String host;

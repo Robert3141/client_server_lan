@@ -1,3 +1,7 @@
+## [2.0.3] - 20/02/2021
+
+* Code refactoring using pedantic
+
 ## [2.0.2] - 20/02/2021
 
 * Package dependencies should be resolved properly now
