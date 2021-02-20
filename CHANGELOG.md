@@ -1,3 +1,7 @@
+## [2.0.2] - 20/02/2021
+
+* Package dependencies should be resolved properly now
+
 ## [2.0.1] - 11/02/2021
 
 * Updated packages hoping to fix a dio error
