@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:get_ip/get_ip.dart';
 import 'package:isohttpd/isohttpd.dart';
 import 'package:meta/meta.dart';
 import 'package:emodebug/emodebug.dart';
-import 'package:wifi/wifi.dart';
 
 part 'server.dart';
 part 'client.dart';
@@ -26,6 +26,7 @@ class _e {
   static const String noResponse = 'no response';
   static const String shouldNotReceive =
       'this node should not have received this command';
+  static const String serverError = 'Server error.';
   static ArgumentError addressNull =
       ArgumentError('The address cannot be null');
   static ArgumentError dataNull = ArgumentError('The data cannot be null');
@@ -45,6 +46,8 @@ class _s {
   static const String forwardData = 'forward_data';
   static const String clientDisconnect = 'client_disconnect';
   static const String clientDispose = 'client_dispose';
+  static const String checkServerExist = 'check_server_already_exist';
+  static const String imAlreadyServer = 'im_already_server';
 
   //list of all these strings
   static const List<String> titles = [
@@ -52,7 +55,9 @@ class _s {
     getClientNames,
     forwardData,
     clientDisconnect,
-    clientDispose
+    clientDispose,
+    checkServerExist,
+    imAlreadyServer,
   ];
 }
 
@@ -66,6 +71,8 @@ abstract class _BaseNode {
   int _socketPort;
   bool _isRunning = false;
   Function() onDispose = () {};
+  Function(DataPacket) onServerAlreadyExist = (dataPacket) {};
+  Function(String) onError = (error) {};
 
   final Completer<void> _socketReady = Completer<void>();
   final List<ConnectedClientNode> _clients = <ConnectedClientNode>[];
@@ -235,8 +242,10 @@ abstract class _BaseNode {
   Future<void> _sendInfo(String title, String to) async {
     final response = await _sendData(title, null, to, _suffix);
     if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? _e.noResponse;
-      _.warning('Error sending the info response: $ecode');
+      if (response?.statusCode != null) {
+        final ecode = response?.statusCode ?? _e.noResponse;
+        _.warning('Error sending the info response: $ecode');
+      }
     }
   }
 
@@ -254,11 +263,15 @@ abstract class _BaseNode {
     } on DioError catch (e) {
       if (e.response != null) {
         _.error(e, _e.httpResponse);
+        onError('Error: $e');
         return response;
       } else {
         _.error(e, _e.httpNoResponse);
+        onError('Error: ${_e.serverError}');
+        return null;
       }
     } catch (e) {
+      onError('Error: $e');
       rethrow;
     }
     return response;

@@ -6,6 +6,7 @@
 A LAN communication Flutter package based off [Node Commander](https://github.com/synw/nodecommander) but removing parts such as Commander Nodes and making communication between client and server two way.
 
 ## Usage
+
 ### Add to android files
 
 In android/app/AndroidManifest
@@ -19,6 +20,7 @@ In android/app/AndroidManifest
 ```
 
 Then create a folder xml inside create a file: network_security_config.xml
+
 ```
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
@@ -29,7 +31,6 @@ Then create a folder xml inside create a file: network_security_config.xml
   </base-config>
  </network-security-config>
 ```
-
 
 ### Run a Node
 
@@ -53,10 +54,11 @@ void startServer() async {
     });
     server.dataResponse.listen((DataPacket data) {
       setState(() {
-        String dataRecieved = data.payload;
+        String dataReceived = data.payload;
       });
     });
 ```
+
 Start a Client Node
 
 ```dart
@@ -76,11 +78,12 @@ void startClient() async {
     });
     client.dataResponse.listen((DataPacket data) {
       setState(() {
-        String dataRecieved = data.payload;
+        String dataReceived = data.payload;
       });
     });
   }
 ```
+
 Server scan for Clients
 
 ```dart
@@ -119,3 +122,7 @@ void serverToClient(String dataToSend, String clientName) async {
     await server.sendData(dataToSend, "userInfo", client);
   }
 ```
+
+## Example
+
+![Example](https://github.com/fikrirazzaq/client_server_lan/blob/master/example/art/example_screenshot.jpg)

@@ -1,13 +1,16 @@
 part of 'basenode.dart';
 
-/// The Node for if the device is to act as a server (i.e connect to all the clients). It can communicate with all the clients it's connected to.
+/// The Node for if the device is to act as a server (i.e connect to all the clients).
+/// It can communicate with all the clients it's connected to.
 class ServerNode extends _BaseServerNode {
-  ServerNode(
-      {@required this.name,
-      this.port = 8084,
-      this.verbose = false,
-      this.onDispose,
-      this.clientDispose}) {
+  ServerNode({
+    @required this.name,
+    this.port = 8084,
+    this.verbose = false,
+    this.onDispose,
+    this.clientDispose,
+    this.onError,
+  }) {
     if (name == null || name == '') throw _e.nameNull;
   }
 
@@ -27,11 +30,17 @@ class ServerNode extends _BaseServerNode {
   @override
   bool verbose;
 
-  /// This function is called when this server has been disposed. The clients are also forced to dispose as there is no server.
+  /// This function is called when error occured.
+  @override
+  Function(String) onError;
+
+  /// This function is called when this server has been disposed.
+  /// he clients are also forced to dispose as there is no server.
   @override
   Function() onDispose;
 
-  /// This function is called when a client has been disposed. They are removed from the connected clients list.
+  /// This function is called when a client has been disposed.
+  /// They are removed from the connected clients list.
   @override
   Function(ConnectedClientNode c) clientDispose;
 
@@ -39,7 +48,7 @@ class ServerNode extends _BaseServerNode {
   Future<void> init() async {
     //change host
     if (Platform.isAndroid || Platform.isIOS) {
-      host = await Wifi.ip;
+      host = await GetIp.ipAddress;
     } else {
       try {
         host = await _getHost();
@@ -57,7 +66,8 @@ abstract class _BaseServerNode with _BaseNode {
     _isServer = true;
   }
 
-  /// Returns a list of clients connected in the form of Connected Client Node (an object which contains info such as last seen, name and address)
+  /// Returns a list of clients connected in the form of
+  /// Connected Client Node (an object which contains info such as last seen, name and address)
   List<ConnectedClientNode> get clientsConnected => _clients;
 
   /// Used to scan for client Nodes
@@ -67,6 +77,7 @@ abstract class _BaseServerNode with _BaseNode {
 
   Future<void> _initServerNode(String host, {@required bool start}) async {
     await _initNode(host, true, start: start);
+    await _listenForDiscovery();
     if (verbose) {
       _.ok(_e.nodeReady);
     }
@@ -112,15 +123,35 @@ abstract class _BaseServerNode with _BaseNode {
     _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
 
-  @override
-  void dispose() async {
-    //tell all the clients to dispose
-    if (_clients != null && _isRunning) {
-      for (var c in _clients) {
-        await _sendInfo(_s.clientDispose, c.address);
-      }
+  Future<void> _listenForDiscovery() async {
+    assert(_socket != null);
+    await _socketReady.future;
+    if (verbose) {
+      print('Listening on socket ${_socket.address.host}:$_socketPort');
     }
-    super.dispose();
+    _socket.listen((RawSocketEvent e) async {
+      final d = _socket.receive();
+      if (d == null) {
+        return;
+      }
+      final message = utf8.decode(d.data).trim();
+      final data = DataPacket.fromJson(json.decode(message));
+
+      // Listen only from other addresses.
+      if (data.host != host) {
+        if (verbose) {
+          print('Received connection request from Client $data}');
+        }
+
+        if (data.title == _s.checkServerExist) {
+          final payloadToSend = DataPacket(
+                  host: host, port: port, name: name, title: _s.imAlreadyServer)
+              .encodeToString();
+          final dataToSend = utf8.encode(payloadToSend);
+          _socket.send(dataToSend, InternetAddress(data.host), _socketPort);
+        }
+      }
+    });
   }
 
   @override

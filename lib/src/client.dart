@@ -1,12 +1,17 @@
 part of 'basenode.dart';
 
-/// The Node for if the device is to act as a client (i.e wait for server to connect to it). It can only communicate with the server. Additional work needs to be added in order to facilitate data forwarding.
+/// The Node for if the device is to act as a client (i.e wait for server to connect to it).
+/// It can only communicate with the server.
+/// Additional work needs to be added in order to facilitate data forwarding.
 class ClientNode extends _BaseClientNode {
-  ClientNode(
-      {@required this.name,
-      this.port = 8084,
-      this.verbose = false,
-      this.onDispose}) {
+  ClientNode({
+    @required this.name,
+    this.port = 8084,
+    this.verbose = false,
+    this.onDispose,
+    this.onServerAlreadyExist,
+    this.onError,
+  }) {
     if (name == null || name == '') throw _e.nameNull;
   }
 
@@ -30,11 +35,19 @@ class ClientNode extends _BaseClientNode {
   @override
   Function() onDispose;
 
+  /// This function is called when client check the existing server and server is already exist.
+  @override
+  Function(DataPacket) onServerAlreadyExist;
+
+  /// This function is called when error is occured.
+  @override
+  Function(String) onError;
+
   /// Used to setup the Node ready for use
   Future<void> init() async {
     //change host
     if (Platform.isAndroid || Platform.isIOS) {
-      host = await Wifi.ip;
+      host = await GetIp.ipAddress;
     } else {
       try {
         host = await _getHost();
@@ -57,6 +70,8 @@ abstract class _BaseClientNode with _BaseNode {
   /// Provides information about the server if one is connected
   ConnectedClientNode get serverDetails => _server;
 
+  Future<void> discoverServerNode() async => _broadcastCheckServerExistance();
+
   Future<void> _initClientNode(String host, {@required bool start}) async {
     await _initNode(host, false, start: start);
     await _listenForDiscovery();
@@ -78,18 +93,43 @@ abstract class _BaseClientNode with _BaseNode {
         return;
       }
       final message = utf8.decode(d.data).trim();
-      final dynamic data = json.decode(message);
-      _server = ConnectedClientNode(
-          address: '${data['host']}:${data['port']}',
-          name: data['name'].toString(),
-          lastSeen: DateTime.now());
-      if (verbose) {
-        print(
-            'Recieved connection request from Client ${data['host']}:${data['port']}');
+      final data = DataPacket.fromJson(json.decode(message));
+
+      // Listen only from other adresses.
+      if (data.host != host) {
+        _server = ConnectedClientNode(
+          address: '${data.host}:${data.port}',
+          name: data.name,
+          lastSeen: DateTime.now(),
+        );
+        if (verbose) {
+          print('Received connection request from Client $data');
+        }
+        final addr = "${data.host}:${data.port}";
+
+        if (data.title == _s.imAlreadyServer) {
+          onServerAlreadyExist(data);
+        } else {
+          await _sendInfo(_s.clientConnect, addr);
+        }
       }
-      var addr = '${data['host']}:${data['port']}';
-      await _sendInfo(_s.clientConnect, addr);
     });
+  }
+
+  Future<void> _broadcastCheckServerExistance() async {
+    assert(host != null);
+    await _socketReady.future;
+    final payload = DataPacket(
+            host: host, port: port, name: name, title: _s.checkServerExist)
+        .encodeToString();
+    final data = utf8.encode(payload);
+    String broadcastAddr;
+    final l = host.split('.');
+    broadcastAddr = '${l[0]}.${l[1]}.${l[2]}.255';
+    if (verbose) {
+      print('Broadcasting to $broadcastAddr: $payload');
+    }
+    _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
 
   Future<List<ConnectedClientNode>> getConnectedClients() async {
@@ -98,8 +138,13 @@ abstract class _BaseClientNode with _BaseNode {
   }
 
   @override
-  Future<void> sendData(Object data, [String title = 'no name', String to]) =>
-      super.sendData(data, title, to ?? serverDetails.address);
+  Future<void> sendData(Object data, [String title = "no name", String to]) {
+    if (serverDetails == null) {
+      onError(_e.serverError);
+      return null;
+    }
+    return super.sendData(data, title, to ?? serverDetails.address);
+  }
 
   @override
   void dispose() async {
