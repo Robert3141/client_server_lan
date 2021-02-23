@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:client_server_lan/client_server_lan.dart';
+import 'package:device_info/device_info.dart';
+
+import 'client_page.dart';
+import 'server_page.dart';
 
 void main() async {
   runApp(MyApp());
@@ -10,108 +13,149 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LAN Server-Client Demo',
+      title: 'UDPLANtransfer',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'LAN Server-Client Demo'),
+      home: HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
+class HomePage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _HomePageState extends State<HomePage> {
+  String dropdownValue = 'Server';
+  bool isLoading = false;
+  String dataReceived = '';
+  bool isRunning = false;
+  String status = "";
+
+  // Server
   ServerNode server;
+  List<ConnectedClientNode> connectedClientNodes = [];
+
+  // Client
   ClientNode client;
-  static const String clientName = "client";
-  static const String serverName = "server";
-  bool dropdownEnabled = true;
-  String serverStatus = "Server not running";
-  String clientStatus = "Client not running";
-  String clientIPs = "No devices connected";
-  String dataToSend = "Testing 1 2 3";
-  String dataReceived = "No response yet...";
-  String clientToSend = clientName;
-  String dropdownValue = serverName;
-  bool isRunning() => dropdownValue == serverName
-      ? server != null
-          ? server.isRunning
-          : false
-      : client != null
-          ? client.isRunning
-          : false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('UDPLANtransfer'),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildDropdown(),
+            Expanded(
+              child: dropdownValue == 'Server'
+                  ? ServerPage(
+                      onStartPressed: startServer,
+                      onDisposePressed: disposeServer,
+                      connectedClientNodes: connectedClientNodes,
+                      onFindClientsPressed: findClients,
+                      onSendToClient: serverToClient,
+                      dataReceived: dataReceived,
+                      isLoading: isLoading,
+                      isRunning: isRunning,
+                      status: status,
+                    )
+                  : ClientPage(
+                      onStartPressed: startClient,
+                      onDisposePressed: disposeClient,
+                      onSendToServer: clientToServer,
+                      dataReceived: dataReceived,
+                      onCheckServerPressed: checkServerExistance,
+                      isLoading: isLoading,
+                      isRunning: isRunning,
+                      status: status,
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  DropdownButton<String> _buildDropdown() {
+    return DropdownButton<String>(
+      value: dropdownValue,
+      disabledHint: Text(dropdownValue),
+      onChanged: !isRunning
+          ? (String newValue) {
+              setState(() {
+                dropdownValue = newValue;
+              });
+            }
+          : null,
+      items: <String>['Server', 'Client']
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
 
   void startServer() async {
-    dropdownEnabled = false;
-    server = ServerNode(
-      name: serverName,
-      verbose: true,
-      onDispose: onDispose,
-      clientDispose: clientDispose,
-    );
+    AndroidDeviceInfo deviceInfo = await DeviceInfoPlugin().androidInfo;
+    setState(() {
+      isLoading = true;
+      server = ServerNode(
+        name: 'Server-${deviceInfo.brand}-${deviceInfo.model}',
+        verbose: true,
+        onDispose: onDisposeServer,
+        clientDispose: clientDispose,
+        onError: onError,
+      );
+    });
+
     await server.init();
     await server.onReady;
+
     setState(() {
-      serverStatus = "Server ready on ${server.host}:${server.port}";
+      status = "Server ready on ${server.host}:${server.port} (${server.name})";
+      isRunning = true;
+      isLoading = false;
     });
     server.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataReceived = data.payload;
+        dataReceived = data.payload.toString();
       });
     });
   }
 
-  void startClient() async {
-    dropdownEnabled = false;
-    client = ClientNode(
-      name: clientName,
-      verbose: true,
-      onDispose: onDispose,
-      onServerAlreadyExist: onServerAlreadyExist,
-    );
-    await client.init();
-    await client.onReady;
+  void disposeServer() {
     setState(() {
-      clientStatus = "Client ready on ${client.host}:${client.port}";
+      isLoading = true;
     });
-    client.dataResponse.listen((DataPacket data) {
-      print("LISTENDATARESPONSE $data");
-      setState(() {
-        dataReceived = data.payload;
-      });
-    });
+    server.dispose();
   }
 
-  void onDispose() {
+  void onDisposeServer() {
     setState(() {
-      dropdownEnabled = true;
-      clientIPs = "";
-      clientStatus = dropdownValue == serverName
-          ? "Server not running"
-          : "Client not running";
+      isRunning = false;
+      status = "Server is not running";
+      isLoading = false;
+      connectedClientNodes = [];
     });
-  }
-
-  void onServerAlreadyExist(String host) {
-    print("Server already exist on $host");
   }
 
   void clientDispose(ConnectedClientNode c) async {
     setState(() {
-      clientIPs = "";
+      connectedClientNodes = [];
     });
     for (final s in server.clientsConnected) {
       setState(() {
-        clientIPs += "id=${s.name},IP=${s.address}\n";
+        connectedClientNodes.add(s);
       });
     }
   }
@@ -120,163 +164,110 @@ class _MyHomePageState extends State<MyHomePage> {
     server.discoverNodes();
     await Future<Object>.delayed(const Duration(seconds: 2));
     setState(() {
-      clientIPs = "";
+      connectedClientNodes = [];
     });
     for (final s in server.clientsConnected) {
       setState(() {
-        clientIPs += "id=${s.name},IP=${s.address}\n";
+        connectedClientNodes.add(s);
       });
     }
   }
 
-  void clientToServer() async {
-    await client.sendData(dataToSend, "userInfo");
-  }
-
-  void serverToClient(String clientName) async {
+  void serverToClient(String clientName, dynamic message) async {
     final String client = server.clientUri(clientName);
-    await server.sendData(dataToSend, "userInfo", client);
+    await server.sendData(message, "userInfo", client);
   }
 
-  void connectedNodes() async {
-    client.discoverServerNode();
+  // Client
+  void startClient() async {
+    AndroidDeviceInfo deviceInfo = await DeviceInfoPlugin().androidInfo;
+    setState(() {
+      isLoading = true;
+      client = ClientNode(
+        name: 'Client-${deviceInfo.brand}-${deviceInfo.model}',
+        verbose: true,
+        onDispose: onDisposeClient,
+        onServerAlreadyExist: onServerAlreadyExist,
+        onError: onError,
+      );
+    });
+
+    await client.init();
+    await client.onReady;
+
+    setState(() {
+      status = "Client ready on ${client.host}:${client.port} (${client.name})";
+      isRunning = true;
+      isLoading = false;
+    });
+
+    client.dataResponse.listen((DataPacket data) {
+      setState(() {
+        dataReceived = data.payload;
+      });
+    });
   }
 
   void disposeClient() {
     client.dispose();
+  }
+
+  void onDisposeClient() {
     setState(() {
-      clientStatus = "Client not running";
+      isRunning = false;
+      status = "Client is not running";
+      isLoading = false;
     });
-    dropdownEnabled = true;
   }
 
-  void disposeServer() {
-    server.dispose();
-    setState(() {
-      serverStatus = "Server not running";
-    });
-    dropdownEnabled = true;
-  }
-
-  @override
-  void dispose() {
-    dropdownEnabled
-        ? dropdownValue == serverName
-            ? disposeServer()
-            : disposeClient()
-        : print("Disposing");
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> mainWidgets = [
-      DropdownButton<String>(
-        value: dropdownValue,
-        icon: Icon(Icons.arrow_downward),
-        iconSize: 24,
-        elevation: 16,
-        style: TextStyle(color: Colors.deepPurple),
-        underline: Container(
-          height: 2,
-          color: Colors.deepPurpleAccent,
-        ),
-        onChanged: (String newValue) {
-          if (dropdownEnabled) {
-            setState(() {
-              dropdownValue = newValue;
-            });
-          }
-        },
-        items: <String>[serverName, clientName]
-            .map<DropdownMenuItem<String>>((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-      ),
-      dropdownValue == serverName
-          ? Column(
-              children: <Widget>[
-                Text(serverStatus),
-                RaisedButton(
-                  child: Text("Start Server"),
-                  onPressed: () => startServer(),
-                ),
-                RaisedButton(
-                  child: Text("Scan Clients"),
-                  onPressed: () => dropdownEnabled ? null : findClients(),
-                ),
-                Text(clientIPs),
-                TextField(
-                  decoration: InputDecoration(
-                      labelText: "Client to send data to",
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(20)),
-                  onChanged: (String text) {
-                    setState(() {
-                      clientToSend = text;
-                    });
-                  },
-                ),
-              ],
-            )
-          : Column(
-              children: <Widget>[
-                Text(clientStatus),
-                RaisedButton(
-                  child: Text("Start Client"),
-                  onPressed: () => startClient(),
-                ),
-              ],
+  Future<void> onServerAlreadyExist(DataPacket dataPacket) async {
+    print("Server already exist on ${dataPacket.host} (${dataPacket.name})");
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Server Already Exist'),
+          content:
+              Text('Server ready on ${dataPacket.host} (${dataPacket.name})'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('CLOSE'),
             ),
-    ];
-    List<Widget> bottomWidgets = [
-      TextField(
-        decoration: InputDecoration(
-            labelText: "Data to send",
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(20)),
-        onChanged: (String text) {
-          setState(() {
-            dataToSend = text;
-          });
-        },
-      ),
-      RaisedButton(
-        child: Text("Send Data"),
-        onPressed: () => dropdownEnabled
-            ? null
-            : dropdownValue == serverName
-                ? serverToClient(clientToSend)
-                : clientToServer(),
-      ),
-      Text(dataReceived),
-      RaisedButton(
-        child: Text("Dispose $dropdownValue"),
-        onPressed: () => dropdownEnabled
-            ? null
-            : dropdownValue == serverName
-                ? disposeServer()
-                : disposeClient(),
-      ),
-      SizedBox(height: 20),
-      RaisedButton(
-        child: Text("Connected Clients"),
-        onPressed: () => dropdownEnabled ? null : connectedNodes(),
-      ),
-    ];
-    if (isRunning()) mainWidgets.addAll(bottomWidgets);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: ListView(
-          children: mainWidgets,
-        ),
-      ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> checkServerExistance() async {
+    await client.discoverServerNode();
+  }
+
+  void clientToServer(dynamic message) async {
+    await client.sendData(message, "userInfo");
+  }
+
+  Future<void> onError(String error) async {
+    print("ERROR $error");
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(error),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('CLOSE'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

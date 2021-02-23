@@ -29,6 +29,7 @@ dependencies:
   client_server_lan:
     path: ../
   cupertino_icons: ^0.1.3
+  intl:
 
 dev_dependencies:
   flutter_test:

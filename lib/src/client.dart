@@ -10,6 +10,7 @@ class ClientNode extends _BaseClientNode {
     this.verbose = false,
     this.onDispose,
     this.onServerAlreadyExist,
+    this.onError,
   }) {
     if (name == null || name == "") throw _e.nameNull;
   }
@@ -34,8 +35,13 @@ class ClientNode extends _BaseClientNode {
   @override
   Function() onDispose;
 
+  /// This function is called when client check the existing server and server is already exist.
   @override
-  Function(String) onServerAlreadyExist;
+  Function(DataPacket) onServerAlreadyExist;
+
+  /// This function is called when error is occured.
+  @override
+  Function(String) onError;
 
   /// Used to setup the Node ready for use
   Future<void> init() async {
@@ -87,21 +93,22 @@ abstract class _BaseClientNode with _BaseNode {
         return;
       }
       final message = utf8.decode(d.data).trim();
-      final dynamic data = json.decode(message);
+      final DataPacket data = DataPacket.fromJson(json.decode(message));
 
       // Listen only from other adresses.
-      if (data["host"].toString() != host) {
+      if (data.host != host) {
         _server = ConnectedClientNode(
-            address: "${data["host"]}:${data["port"]}",
-            name: data["name"].toString(),
-            lastSeen: DateTime.now());
+          address: "${data.host}:${data.port}",
+          name: data.name,
+          lastSeen: DateTime.now(),
+        );
         if (verbose) {
           print("Received connection request from Client $data");
         }
-        final String addr = "${data["host"]}:${data["port"]}";
+        final String addr = "${data.host}:${data.port}";
 
-        if (data["title"] == _s.imAlreadyServer) {
-          onServerAlreadyExist(data["host"]);
+        if (data.title == _s.imAlreadyServer) {
+          onServerAlreadyExist(data);
         } else {
           await _sendInfo(_s.clientConnect, addr);
         }
@@ -131,8 +138,13 @@ abstract class _BaseClientNode with _BaseNode {
   }
 
   @override
-  Future<void> sendData(Object data, [String title = "no name", String to]) =>
-      super.sendData(data, title, to ?? this.serverDetails.address);
+  Future<void> sendData(Object data, [String title = "no name", String to]) {
+    if (this.serverDetails == null) {
+      onError(_e.serverError);
+      return null;
+    }
+    return super.sendData(data, title, to ?? this.serverDetails.address);
+  }
 
   @override
   void dispose() async {

@@ -28,7 +28,7 @@ class DataPacket {
       @required this.host,
       @required this.port,
       @required this.title,
-      Object payload,
+      dynamic payload,
       this.to}) {
     this._payload = payload;
   }
@@ -59,11 +59,17 @@ class DataPacket {
   final String to;
 
   /// The actual data being ditributed
-  String get payload => _payload.toString();
+  dynamic get payload => _payload;
 
   /// Encodes the packet data into a json ready for transmitting
-  String encodeToString() =>
-      '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload", "to": "$to"}';
+  String encodeToString() {
+    try {
+      var decodedJson = json.decode(payload) as Map<String, dynamic>;
+      return '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": $payload, "to": "$to"}';
+    } catch (e) {
+      return '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload", "to": "$to"}';
+    }
+  }
 
   @override
   String toString() => encodeToString();
@@ -71,14 +77,14 @@ class DataPacket {
 
 Future<HttpResponse> _responseHandler(
     HttpRequest request, IsoLogger log) async {
-  final content = await utf8.decoder.bind(request).join();
-  Object c = content;
+  final String content = await utf8.decoder.bind(request).join();
+  Map<String, dynamic> jsonFormat;
   try {
-    c = json.decode(c);
+    jsonFormat = json.decode(content);
   } catch (e) {
     print("Json not decoded: $e");
   }
-  log.push(c);
+  log.push(jsonFormat);
   request.response.statusCode = HttpStatus.ok;
   return request.response;
 }

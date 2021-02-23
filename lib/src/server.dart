@@ -3,12 +3,14 @@ part of 'basenode.dart';
 /// The Node for if the device is to act as a server (i.e connect to all the clients).
 /// It can communicate with all the clients it's connected to.
 class ServerNode extends _BaseServerNode {
-  ServerNode(
-      {@required this.name,
-      this.port = 8084,
-      this.verbose = false,
-      this.onDispose,
-      this.clientDispose}) {
+  ServerNode({
+    @required this.name,
+    this.port = 8084,
+    this.verbose = false,
+    this.onDispose,
+    this.clientDispose,
+    this.onError,
+  }) {
     if (name == null || name == "") throw _e.nameNull;
   }
 
@@ -27,6 +29,10 @@ class ServerNode extends _BaseServerNode {
   /// Whether to debug print outputs of what's happening
   @override
   bool verbose;
+
+  /// This function is called when error occured.
+  @override
+  Function(String) onError;
 
   /// This function is called when this server has been disposed.
   /// he clients are also forced to dispose as there is no server.
@@ -129,20 +135,20 @@ abstract class _BaseServerNode with _BaseNode {
         return;
       }
       final message = utf8.decode(d.data).trim();
-      final dynamic data = json.decode(message);
+      final DataPacket data = DataPacket.fromJson(json.decode(message));
 
       // Listen only from other addresses.
-      if (data["host"].toString() != host) {
+      if (data.host != host) {
         if (verbose) {
           print("Received connection request from Client $data}");
         }
 
-        if (data["title"].toString() == _s.checkServerExist) {
+        if (data.title == _s.checkServerExist) {
           final payloadToSend = DataPacket(
                   host: host, port: port, name: name, title: _s.imAlreadyServer)
               .encodeToString();
           final dataToSend = utf8.encode(payloadToSend);
-          _socket.send(dataToSend, InternetAddress(data["host"]), _socketPort);
+          _socket.send(dataToSend, InternetAddress(data.host), _socketPort);
         }
       }
     });

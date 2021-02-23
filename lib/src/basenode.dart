@@ -26,6 +26,7 @@ class _e {
   static const String noResponse = "no response";
   static const String shouldNotReceive =
       "this node should not have received this command";
+  static const String serverError = "Server error.";
   static ArgumentError addressNull =
       ArgumentError("The address cannot be null");
   static ArgumentError dataNull = ArgumentError("The data cannot be null");
@@ -71,7 +72,8 @@ abstract class _BaseNode {
   int _socketPort;
   bool _isRunning = false;
   Function() onDispose = () {};
-  Function(String) onServerAlreadyExist = (host) {};
+  Function(DataPacket) onServerAlreadyExist = (dataPacket) {};
+  Function(String) onError = (error) {};
 
   final Completer<void> _socketReady = Completer<void>();
   final List<ConnectedClientNode> _clients = <ConnectedClientNode>[];
@@ -150,15 +152,20 @@ abstract class _BaseNode {
   void _listenToIso() {
     iso.logs.listen((Object data) async {
       if (data is Map<String, Object>) {
+        print("TYPE: MAP");
         //convert to packet
         data = DataPacket.fromJson(data);
       }
       if (data is String) {
+        print("TYPE: STRING");
+
         //data is message about server
         if (verbose) {
           print("Received: $data");
         }
       } else if (data is DataPacket) {
+        print("TYPE: DATAPACKET");
+
         //print
         if (_debug) print("----received $data");
         //update last seen
@@ -239,11 +246,11 @@ abstract class _BaseNode {
 
   Future<void> _sendInfo(String title, String to) async {
     final response = await _sendData(title, null, to, _suffix);
-    print(
-        "RESPONSE SENDINFO $title, $to: ${response.statusCode} ${response.data}");
     if (response == null || response.statusCode != HttpStatus.ok) {
-      final ecode = response?.statusCode ?? _e.noResponse;
-      _.warning("Error sending the info response: $ecode");
+      if (response?.statusCode != null) {
+        final ecode = response?.statusCode ?? _e.noResponse;
+        _.warning("Error sending the info response: $ecode");
+      }
     }
   }
 
@@ -261,11 +268,15 @@ abstract class _BaseNode {
     } on DioError catch (e) {
       if (e.response != null) {
         _.error(e, _e.httpResponse);
+        onError("Error: $e");
         return response;
       } else {
         _.error(e, _e.httpNoResponse);
+        onError("Error: ${_e.serverError}");
+        return null;
       }
     } catch (e) {
+      onError("Error: $e");
       rethrow;
     }
     return response;
