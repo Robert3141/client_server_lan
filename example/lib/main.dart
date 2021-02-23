@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:client_server_lan/client_server_lan.dart';
 import 'package:device_info/device_info.dart';
@@ -30,6 +31,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool kIsAndroid = false;
   String dropdownValue = 'Server';
   bool isLoading = false;
   String dataReceived = '';
@@ -45,6 +47,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    kIsAndroid =
+        !kIsWeb && Theme.of(context).platform == TargetPlatform.android;
     return Scaffold(
       appBar: AppBar(
         title: Text('UDPLANtransfer'),
@@ -107,11 +111,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   void startServer() async {
-    var deviceInfo = await DeviceInfoPlugin().androidInfo;
+    var name = 'Server';
+    if (kIsAndroid) {
+      var deviceInfo = await DeviceInfoPlugin().androidInfo;
+      name = 'Server-${deviceInfo.brand}-${deviceInfo.model}';
+    }
     setState(() {
       isLoading = true;
       server = ServerNode(
-        name: 'Server-${deviceInfo.brand}-${deviceInfo.model}',
+        name: name,
         verbose: true,
         onDispose: onDisposeServer,
         clientDispose: clientDispose,
@@ -181,11 +189,15 @@ class _HomePageState extends State<HomePage> {
 
   // Client
   void startClient() async {
-    var deviceInfo = await DeviceInfoPlugin().androidInfo;
+    var name = 'Client';
+    if (kIsAndroid) {
+      var deviceInfo = await DeviceInfoPlugin().androidInfo;
+      name = 'Client-${deviceInfo.brand}-${deviceInfo.model}';
+    }
     setState(() {
       isLoading = true;
       client = ClientNode(
-        name: 'Client-${deviceInfo.brand}-${deviceInfo.model}',
+        name: name,
         verbose: true,
         onDispose: onDisposeClient,
         onServerAlreadyExist: onServerAlreadyExist,
