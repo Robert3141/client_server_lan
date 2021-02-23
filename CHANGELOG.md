@@ -1,3 +1,7 @@
+## [2.1.0] - 23/02/2021
+
+* Major help from [Fikrirazzaq](https://github.com/fikrirazzaq)
+
 ## [2.0.3] - 20/02/2021
 
 * Code refactoring using pedantic
