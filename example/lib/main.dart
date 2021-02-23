@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:client_server_lan/client_server_lan.dart';
 import 'package:device_info/device_info.dart';
 
+import 'city.dart';
 import 'client_page.dart';
 import 'server_page.dart';
 
@@ -203,7 +204,11 @@ class _HomePageState extends State<HomePage> {
 
     client.dataResponse.listen((DataPacket data) {
       setState(() {
-        dataReceived = data.payload;
+        if (data.payload.runtimeType == String) {
+          dataReceived = data.payload;
+        } else {
+          dataReceived = City.fromMap(data.payload).toString();
+        }
       });
     });
   }

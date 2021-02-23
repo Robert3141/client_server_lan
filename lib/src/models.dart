@@ -77,7 +77,7 @@ class DataPacket {
 
 Future<HttpResponse> _responseHandler(
     HttpRequest request, IsoLogger log) async {
-  final String content = await utf8.decoder.bind(request).join();
+  final content = await utf8.decoder.bind(request).join();
   Map<String, dynamic> jsonFormat;
   try {
     jsonFormat = json.decode(content);
