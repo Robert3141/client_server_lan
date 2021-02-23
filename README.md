@@ -122,3 +122,7 @@ void serverToClient(String dataToSend, String clientName) async {
     await server.sendData(dataToSend, "userInfo", client);
   }
 ```
+
+## Example
+
+![Example](https://github.com/fikrirazzaq/client_server_lan/blob/master/example/art/example_screenshot.jpg)
