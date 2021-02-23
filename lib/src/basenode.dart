@@ -152,20 +152,15 @@ abstract class _BaseNode {
   void _listenToIso() {
     iso.logs.listen((Object data) async {
       if (data is Map<String, Object>) {
-        print("TYPE: MAP");
         //convert to packet
         data = DataPacket.fromJson(data);
       }
       if (data is String) {
-        print("TYPE: STRING");
-
         //data is message about server
         if (verbose) {
           print('Received: $data');
         }
       } else if (data is DataPacket) {
-        print("TYPE: DATAPACKET");
-
         //print
         if (_debug) print('----received $data');
         //update last seen
