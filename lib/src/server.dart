@@ -35,7 +35,7 @@ class ServerNode extends _BaseServerNode {
   Function(String) onError;
 
   /// This function is called when this server has been disposed.
-  /// he clients are also forced to dispose as there is no server.
+  /// the clients are also forced to dispose as there is no server.
   @override
   Function() onDispose;
 

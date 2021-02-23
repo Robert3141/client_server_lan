@@ -1,6 +1,10 @@
 ## [2.1.0] - 23/02/2021
 
-* Major help from [Fikrirazzaq](https://github.com/fikrirazzaq)
+* On error function added for easier error handling
+* Clients have extra function: onServerAlreadyExist()
+* Uses a different more appropriate package for getting IP adress on Android
+* Example app has much more depth e.g Json sending example
+* Most improvements from [Fikrirazzaq](https://github.com/fikrirazzaq)
 
 ## [2.0.3] - 20/02/2021
 
