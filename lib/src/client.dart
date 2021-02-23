@@ -12,7 +12,7 @@ class ClientNode extends _BaseClientNode {
     this.onServerAlreadyExist,
     this.onError,
   }) {
-    if (name == null || name == "") throw _e.nameNull;
+    if (name == null || name == '') throw _e.nameNull;
   }
 
   /// The name of the node on the network
@@ -47,16 +47,16 @@ class ClientNode extends _BaseClientNode {
   Future<void> init() async {
     //change host
     if (Platform.isAndroid || Platform.isIOS) {
-      this.host = await GetIp.ipAddress;
+      host = await GetIp.ipAddress;
     } else {
       try {
-        this.host = await _getHost();
+        host = await _getHost();
       } catch (e) {
-        if (_debug) print("$e");
+        if (_debug) print('$e');
         throw _e.platformNotSupported;
       }
     }
-    await _initClientNode(this.host, start: true);
+    await _initClientNode(host, start: true);
   }
 }
 
@@ -85,7 +85,7 @@ abstract class _BaseClientNode with _BaseNode {
     assert(_socket != null);
     await _socketReady.future;
     if (verbose) {
-      print("Listening on socket ${_socket.address.host}:$_socketPort");
+      print('Listening on socket ${_socket.address.host}:$_socketPort');
     }
     _socket.listen((RawSocketEvent e) async {
       final d = _socket.receive();
@@ -93,19 +93,19 @@ abstract class _BaseClientNode with _BaseNode {
         return;
       }
       final message = utf8.decode(d.data).trim();
-      final DataPacket data = DataPacket.fromJson(json.decode(message));
+      final data = DataPacket.fromJson(json.decode(message));
 
       // Listen only from other adresses.
       if (data.host != host) {
         _server = ConnectedClientNode(
-          address: "${data.host}:${data.port}",
+          address: '${data.host}:${data.port}',
           name: data.name,
           lastSeen: DateTime.now(),
         );
         if (verbose) {
-          print("Received connection request from Client $data");
+          print('Received connection request from Client $data');
         }
-        final String addr = "${data.host}:${data.port}";
+        final addr = "${data.host}:${data.port}";
 
         if (data.title == _s.imAlreadyServer) {
           onServerAlreadyExist(data);
@@ -124,33 +124,34 @@ abstract class _BaseClientNode with _BaseNode {
         .encodeToString();
     final data = utf8.encode(payload);
     String broadcastAddr;
-    final l = host.split(".");
-    broadcastAddr = "${l[0]}.${l[1]}.${l[2]}.255";
+    final l = host.split('.');
+    broadcastAddr = '${l[0]}.${l[1]}.${l[2]}.255';
     if (verbose) {
-      print("Broadcasting to $broadcastAddr: $payload");
+      print('Broadcasting to $broadcastAddr: $payload');
     }
     _socket.send(data, InternetAddress(broadcastAddr), _socketPort);
   }
 
   Future<List<ConnectedClientNode>> getConnectedClients() async {
-    _sendInfo(_s.getClientNames, serverDetails.address);
+    await _sendInfo(_s.getClientNames, serverDetails.address);
     return await _connectedClients.stream.first;
   }
 
   @override
   Future<void> sendData(Object data, [String title = "no name", String to]) {
-    if (this.serverDetails == null) {
+    if (serverDetails == null) {
       onError(_e.serverError);
       return null;
     }
-    return super.sendData(data, title, to ?? this.serverDetails.address);
+    return super.sendData(data, title, to ?? serverDetails.address);
   }
 
   @override
   void dispose() async {
     // tell server client has been disposed
-    if (isRunning && _server != null)
+    if (isRunning && _server != null) {
       await _sendInfo(_s.clientDisconnect, _server.address);
+    }
     super.dispose();
   }
 }

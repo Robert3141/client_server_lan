@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = false;
   String dataReceived = '';
   bool isRunning = false;
-  String status = "";
+  String status = '';
 
   // Server
   ServerNode server;
@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void startServer() async {
-    AndroidDeviceInfo deviceInfo = await DeviceInfoPlugin().androidInfo;
+    var deviceInfo = await DeviceInfoPlugin().androidInfo;
     setState(() {
       isLoading = true;
       server = ServerNode(
@@ -122,7 +122,7 @@ class _HomePageState extends State<HomePage> {
     await server.onReady;
 
     setState(() {
-      status = "Server ready on ${server.host}:${server.port} (${server.name})";
+      status = 'Server ready on ${server.host}:${server.port} (${server.name})';
       isRunning = true;
       isLoading = false;
     });
@@ -143,7 +143,7 @@ class _HomePageState extends State<HomePage> {
   void onDisposeServer() {
     setState(() {
       isRunning = false;
-      status = "Server is not running";
+      status = 'Server is not running';
       isLoading = false;
       connectedClientNodes = [];
     });
@@ -161,7 +161,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void findClients() async {
-    server.discoverNodes();
+    await server.discoverNodes();
     await Future<Object>.delayed(const Duration(seconds: 2));
     setState(() {
       connectedClientNodes = [];
@@ -174,13 +174,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   void serverToClient(String clientName, dynamic message) async {
-    final String client = server.clientUri(clientName);
-    await server.sendData(message, "userInfo", client);
+    final client = server.clientUri(clientName);
+    await server.sendData(message, 'userInfo', client);
   }
 
   // Client
   void startClient() async {
-    AndroidDeviceInfo deviceInfo = await DeviceInfoPlugin().androidInfo;
+    var deviceInfo = await DeviceInfoPlugin().androidInfo;
     setState(() {
       isLoading = true;
       client = ClientNode(
@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> {
     await client.onReady;
 
     setState(() {
-      status = "Client ready on ${client.host}:${client.port} (${client.name})";
+      status = 'Client ready on ${client.host}:${client.port} (${client.name})';
       isRunning = true;
       isLoading = false;
     });
@@ -215,13 +215,13 @@ class _HomePageState extends State<HomePage> {
   void onDisposeClient() {
     setState(() {
       isRunning = false;
-      status = "Client is not running";
+      status = 'Client is not running';
       isLoading = false;
     });
   }
 
   Future<void> onServerAlreadyExist(DataPacket dataPacket) async {
-    print("Server already exist on ${dataPacket.host} (${dataPacket.name})");
+    print('Server already exist on ${dataPacket.host} (${dataPacket.name})');
     await showDialog(
       context: context,
       builder: (context) {
@@ -247,11 +247,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   void clientToServer(dynamic message) async {
-    await client.sendData(message, "userInfo");
+    await client.sendData(message, 'userInfo');
   }
 
   Future<void> onError(String error) async {
-    print("ERROR $error");
+    print('ERROR $error');
     await showDialog(
       context: context,
       builder: (context) {

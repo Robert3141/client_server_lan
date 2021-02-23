@@ -15,39 +15,39 @@ part 'host.dart';
 
 //errors
 const _ = EmoDebug();
-const String _suffix = "/cmd";
+const String _suffix = '/cmd';
 
 // Strings for debug outputs
 // ignore: camel_case_types
 class _e {
-  static const String nodeReady = "Node is ready";
-  static const String httpResponse = "http error with response";
-  static const String httpNoResponse = "http error with no response";
-  static const String noResponse = "no response";
+  static const String nodeReady = 'Node is ready';
+  static const String httpResponse = 'http error with response';
+  static const String httpNoResponse = 'http error with no response';
+  static const String noResponse = 'no response';
   static const String shouldNotReceive =
-      "this node should not have received this command";
-  static const String serverError = "Server error.";
+      'this node should not have received this command';
+  static const String serverError = 'Server error.';
   static ArgumentError addressNull =
-      ArgumentError("The address cannot be null");
-  static ArgumentError dataNull = ArgumentError("The data cannot be null");
+      ArgumentError('The address cannot be null');
+  static ArgumentError dataNull = ArgumentError('The data cannot be null');
   static ArgumentError nameNull =
-      ArgumentError("The name of the node cannot be null or empty");
+      ArgumentError('The name of the node cannot be null or empty');
   static ArgumentError titleInternal = ArgumentError(
-      "The title cannot be used as it is an internal title. Full list of titles: ${_s.titles}");
+      'The title cannot be used as it is an internal title. Full list of titles: ${_s.titles}');
   static UnsupportedError platformNotSupported =
-      UnsupportedError("Unable to optain the local IP address of this device");
+      UnsupportedError('Unable to optain the local IP address of this device');
 }
 
 // Strings for internal commands
 // ignore: camel_case_types
 class _s {
-  static const String clientConnect = "client_connect";
-  static const String getClientNames = "client_names";
-  static const String forwardData = "forward_data";
-  static const String clientDisconnect = "client_disconnect";
-  static const String clientDispose = "client_dispose";
-  static const String checkServerExist = "check_server_already_exist";
-  static const String imAlreadyServer = "im_already_server";
+  static const String clientConnect = 'client_connect';
+  static const String getClientNames = 'client_names';
+  static const String forwardData = 'forward_data';
+  static const String clientDisconnect = 'client_disconnect';
+  static const String clientDispose = 'client_dispose';
+  static const String checkServerExist = 'check_server_already_exist';
+  static const String imAlreadyServer = 'im_already_server';
 
   //list of all these strings
   static const List<String> titles = [
@@ -68,7 +68,6 @@ abstract class _BaseNode {
   IsoHttpd _iso;
   RawDatagramSocket _socket;
   bool _isServer;
-  bool _debug = false; // TODO make false on any package releases
   int _socketPort;
   bool _isRunning = false;
   Function() onDispose = () {};
@@ -84,8 +83,9 @@ abstract class _BaseNode {
   final StreamController<List<ConnectedClientNode>> _connectedClients =
       StreamController<List<ConnectedClientNode>>.broadcast();
 
-  /// Debug print outputs of the data being received or sent.
-  /// This is primarily for use in the debug development phase
+  final bool _debug = false;
+
+  /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
 
   /// The way to access the status of the HTTP Listener
@@ -101,16 +101,16 @@ abstract class _BaseNode {
   Stream<DataPacket> get dataResponse => _dataResponce.stream;
 
   /// The IP adress of the Node
-  get host => _host;
+  String get host => _host;
 
   /// The String chosen as the name of the Node
-  get name => _name;
+  String get name => _name;
 
   /// The Port of the Node
-  get port => _port;
+  int get port => _port;
 
   /// The http server used for data transmission
-  get iso => _iso;
+  IsoHttpd get iso => _iso;
 
   Future<void> _initNode(String _h, bool isServer,
       {@required bool start}) async {
@@ -119,8 +119,8 @@ abstract class _BaseNode {
     _socketPort ??= _randomSocketPort();
     final router = _initRoutes();
     // run isolate
-    print("host = $_host $host $_h");
-    this._host = _h;
+    print('host = $_host $host $_h');
+    _host = _h;
     _iso = IsoHttpd(host: _h, port: port, router: router);
     await iso.run(startServer: start);
     _listenToIso();
@@ -139,8 +139,8 @@ abstract class _BaseNode {
   }
 
   IsoRouter _initRoutes() {
-    this._host = host;
-    this._port = port;
+    _host = host;
+    _port = port;
     final routes = <IsoRoute>[];
     routes.add(IsoRoute(handler: _responseHandler, path: _suffix));
     final router = IsoRouter(routes);
@@ -161,16 +161,16 @@ abstract class _BaseNode {
 
         //data is message about server
         if (verbose) {
-          print("Received: $data");
+          print('Received: $data');
         }
       } else if (data is DataPacket) {
         print("TYPE: DATAPACKET");
 
         //print
-        if (_debug) print("----received $data");
+        if (_debug) print('----received $data');
         //update last seen
         if (_clients != null) {
-          for (int i = 0; i < _clients.length; i++) {
+          for (var i = 0; i < _clients.length; i++) {
             if (_clients[i].host == data.host) {
               _clients[i].lastSeen = DateTime.now();
               i = _clients.length;
@@ -195,15 +195,15 @@ abstract class _BaseNode {
             _handleGetNames(data);
             break;
           default:
-            //packet Received
-            _.data("Received Packet: ${data.name} : ${data.payload}");
+            //packet recieved
+            _.data('Recieved Packet: ${data.name} : ${data.payload}');
             _dataResponce.sink.add(data);
             break;
         }
       } else {
         // Data not in expected format
         if (verbose) {
-          _.error("Data received type ${data.runtimeType} not packet: " +
+          _.error('Data received type ${data.runtimeType} not packet: ' +
               data.toString());
         }
       }
@@ -212,12 +212,12 @@ abstract class _BaseNode {
 
   Future<void> _initForDiscovery() async {
     if (verbose) {
-      print("Intializing for discovery on $host:$port");
+      print('Intializing for discovery on $host:$port');
     }
     _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, _socketPort)
       ..broadcastEnabled = true;
     if (verbose) {
-      print("Socket is ready at ${_socket.address.host}:$_socketPort");
+      print('Socket is ready at ${_socket.address.host}:$_socketPort');
     }
     if (!_socketReady.isCompleted) {
       _socketReady.complete();
@@ -225,22 +225,22 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(String data, [String title = "no name", String to]) =>
+  Future<void> sendData(String data, [String title = 'no name', String to]) =>
       _sendDataDynamic(data, title, to);
 
   Future<void> _sendDataDynamic(dynamic data,
-      [String title = "no name", String to]) async {
+      [String title = 'no name', String to]) async {
     if (to == null) throw _e.addressNull;
     if (data == null) throw _e.dataNull;
     if (_s.titles.contains(title)) throw _e.titleInternal;
 
     if (verbose) {
-      _.smallArrowOut("Sending data $data to $to");
+      _.smallArrowOut('Sending data $data to $to');
     }
     final response = await _sendData(title, data, to, _suffix);
     if (response == null || response.statusCode != HttpStatus.ok) {
       final ecode = response?.statusCode ?? _e.noResponse;
-      _.warning("Error sending the data response: $ecode");
+      _.warning('Error sending the data response: $ecode');
     }
   }
 
@@ -249,7 +249,7 @@ abstract class _BaseNode {
     if (response == null || response.statusCode != HttpStatus.ok) {
       if (response?.statusCode != null) {
         final ecode = response?.statusCode ?? _e.noResponse;
-        _.warning("Error sending the info response: $ecode");
+        _.warning('Error sending the info response: $ecode');
       }
     }
   }
@@ -257,26 +257,26 @@ abstract class _BaseNode {
   Future<Response> _sendData(
       String title, String data, String to, String endPoint) async {
     if (to == null) throw _e.addressNull;
-    final uri = "http://$to$endPoint";
+    final uri = 'http://$to$endPoint';
     Response response;
     final packet = DataPacket(
         host: host, port: port, name: name, title: title, payload: data);
 
-    if (_debug) print("----sending $packet");
+    if (_debug) print('----sending $packet');
     try {
       response = await _dio.post<Object>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
         _.error(e, _e.httpResponse);
-        onError("Error: $e");
+        onError('Error: $e');
         return response;
       } else {
         _.error(e, _e.httpNoResponse);
-        onError("Error: ${_e.serverError}");
+        onError('Error: ${_e.serverError}');
         return null;
       }
     } catch (e) {
-      onError("Error: $e");
+      onError('Error: $e');
       rethrow;
     }
     return response;
@@ -290,7 +290,7 @@ abstract class _BaseNode {
     _socket.close();
     iso.kill();
     if (verbose) {
-      print(_isServer ? "Server Disposed" : "Client Disposed");
+      print(_isServer ? 'Server Disposed' : 'Client Disposed');
     }
     onDispose();
   }
@@ -303,12 +303,12 @@ abstract class _BaseNode {
     //client connect request
     final client = ConnectedClientNode(
         name: data.name,
-        address: "${data.host}:${data.port}",
+        address: '${data.host}:${data.port}',
         lastSeen: DateTime.now());
     //check client not the same as currently in database if so update current client
     if (_clients.any((element) => element.address == client.address)) {
       //client exists so replace
-      for (int i = 0; i < _clients.length; i++) {
+      for (var i = 0; i < _clients.length; i++) {
         if (client.address == _clients[i].address) _clients[i] = client;
       }
     } else {
@@ -316,7 +316,7 @@ abstract class _BaseNode {
       _clients.add(client);
     }
     if (verbose) {
-      _.state("Client ${data.name} connected at ${data.host}:${data.port}");
+      _.state('Client ${data.name} connected at ${data.host}:${data.port}');
     }
   }
 
@@ -334,10 +334,10 @@ abstract class _BaseNode {
     if (_isServer) {
       // The server recieves the packet
       if (verbose) {
-        _.smallArrowOut("Sending data $data to ${data.to}");
+        _.smallArrowOut('Sending data $data to ${data.to}');
       }
       //send the data
-      final uri = "http://${data.to}$_suffix";
+      final uri = 'http://${data.to}$_suffix';
       Response response;
       final packet = data;
       try {
@@ -354,11 +354,11 @@ abstract class _BaseNode {
       //await the response
       if (response == null || response.statusCode != HttpStatus.ok) {
         final ecode = response?.statusCode ?? _e.noResponse;
-        _.warning("Error sending the data response: $ecode");
+        _.warning('Error sending the data response: $ecode');
       }
     } else {
       // The client recieves the packet
-      _.data("Received Packet: ${data.name} : ${data.payload}");
+      _.data('Recieved Packet: ${data.name} : ${data.payload}');
       _dataResponce.sink.add(data);
     }
   }
@@ -374,7 +374,7 @@ abstract class _BaseNode {
       //should occur
       //stop running so that it doesn't report back to server
       _isRunning = false;
-      this.dispose();
+      dispose();
     } else {
       if (verbose) _.error(_e.shouldNotReceive);
     }
