@@ -83,7 +83,7 @@ abstract class _BaseNode {
   final StreamController<List<ConnectedClientNode>> _connectedClients =
       StreamController<List<ConnectedClientNode>>.broadcast();
 
-  final bool _debug = false;
+  final bool _debug = true; //TODO: make false
 
   /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;
@@ -119,7 +119,7 @@ abstract class _BaseNode {
     _socketPort ??= _randomSocketPort();
     final router = _initRoutes();
     // run isolate
-    print('host = $_host $host $_h');
+    if (verbose) print('host = $_host $host $_h');
     _host = _h;
     _iso = IsoHttpd(host: _h, port: port, router: router);
     await iso.run(startServer: start);
@@ -259,6 +259,7 @@ abstract class _BaseNode {
 
     if (_debug) print('----sending $packet');
     try {
+      print("_sendData ${packet.encodeToString()}");
       response = await _dio.post<Object>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {
