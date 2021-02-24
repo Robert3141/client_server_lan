@@ -105,7 +105,7 @@ abstract class _BaseClientNode with _BaseNode {
         if (verbose) {
           print('Received connection request from Client $data');
         }
-        final addr = "${data.host}:${data.port}";
+        final addr = '${data.host}:${data.port}';
 
         if (data.title == _s.imAlreadyServer) {
           onServerAlreadyExist(data);
@@ -138,7 +138,7 @@ abstract class _BaseClientNode with _BaseNode {
   }
 
   @override
-  Future<void> sendData(Object data, [String title = "no name", String to]) {
+  Future<void> sendData(Object data, [String title = 'no name', String to]) {
     if (serverDetails == null) {
       onError(_e.serverError);
       return null;

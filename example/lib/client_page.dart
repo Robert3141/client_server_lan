@@ -96,8 +96,7 @@ class ClientPage extends StatelessWidget {
                   ),
                   onPressed: isRunning
                       ? () {
-                          TextEditingController controller =
-                              TextEditingController();
+                          var controller = TextEditingController();
                           showDialog(
                             context: context,
                             builder: (context) {

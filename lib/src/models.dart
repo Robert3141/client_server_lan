@@ -64,7 +64,8 @@ class DataPacket {
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() {
     try {
-      var decodedJson = json.decode(payload) as Map<String, dynamic>;
+      // not in use
+      //var decodedJson = json.decode(payload) as Map<String, dynamic>;
       return '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": $payload, "to": "$to"}';
     } catch (e) {
       return '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload", "to": "$to"}';

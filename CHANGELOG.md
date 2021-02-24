@@ -1,3 +1,12 @@
+## [3.0.0] - 23/02/2021
+
+* On error function added for easier error handling
+* Clients have extra function: onServerAlreadyExist()
+* Removed the ability of clients to be disposed when the server is disposed
+* Uses a different more appropriate package for getting IP adress on Android
+* Example app has much more depth e.g Json sending example
+* Most improvements from [Fikrirazzaq](https://github.com/fikrirazzaq)
+
 ## [2.0.3] - 20/02/2021
 
 * Code refactoring using pedantic

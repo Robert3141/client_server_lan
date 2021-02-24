@@ -125,4 +125,6 @@ void serverToClient(String dataToSend, String clientName) async {
 
 ## Example
 
-![Example](https://github.com/fikrirazzaq/client_server_lan/blob/master/example/art/example_screenshot.jpg)
+New Example app courtesy of [Fikrirazzaq](https://github.com/fikrirazzaq)
+
+![Example](https://raw.githubusercontent.com/Robert3141/client_server_lan/master/example/art/example_screenshot.jpg)
