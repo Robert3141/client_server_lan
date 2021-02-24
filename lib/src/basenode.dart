@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get_ip/get_ip.dart';
 import 'package:isohttpd/isohttpd.dart';
 import 'package:meta/meta.dart';
@@ -259,7 +260,6 @@ abstract class _BaseNode {
 
     if (_debug) print('----sending $packet');
     try {
-      print("_sendData ${packet.encodeToString()}");
       response = await _dio.post<Object>(uri, data: packet.encodeToString());
     } on DioError catch (e) {
       if (e.response != null) {

@@ -79,12 +79,11 @@ class DataPacket {
 Future<HttpResponse> _responseHandler(
     HttpRequest request, IsoLogger log) async {
   final content = await utf8.decoder.bind(request).join();
-  print("_responseHandler $content");
   Map<String, dynamic> jsonFormat;
   try {
     jsonFormat = json.decode(content);
   } catch (e) {
-    print('Json not decoded: $e');
+    debugPrint('Json not decoded: $e');
   }
   log.push(jsonFormat);
   request.response.statusCode = HttpStatus.ok;
