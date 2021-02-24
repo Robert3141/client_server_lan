@@ -84,7 +84,7 @@ abstract class _BaseNode {
   final StreamController<List<ConnectedClientNode>> _connectedClients =
       StreamController<List<ConnectedClientNode>>.broadcast();
 
-  final bool _debug = true; //TODO: make false
+  final bool _debug = false;
 
   /// Debug print outputs of the data being received or sent. This is primarily for use in the debug development phase
   bool verbose;

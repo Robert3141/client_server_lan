@@ -1,7 +1,7 @@
 name: client_server_lan
 description: A simple to use LAN communication package. The Server and a Client
   can freely distribute data over LAN.
-version: 3.0.0
+version: 3.0.1
 homepage: https://github.com/Robert3141/client_server_lan
 
 environment:
