@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get_ip/get_ip.dart';
 import 'package:isohttpd/isohttpd.dart';
 import 'package:meta/meta.dart';
@@ -119,7 +120,7 @@ abstract class _BaseNode {
     _socketPort ??= _randomSocketPort();
     final router = _initRoutes();
     // run isolate
-    print('host = $_host $host $_h');
+    if (verbose) print('host = $_host $host $_h');
     _host = _h;
     _iso = IsoHttpd(host: _h, port: port, router: router);
     await iso.run(startServer: start);

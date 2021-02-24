@@ -64,8 +64,8 @@ class DataPacket {
   /// Encodes the packet data into a json ready for transmitting
   String encodeToString() {
     try {
-      // not in use
-      //var decodedJson = json.decode(payload) as Map<String, dynamic>;
+      // if its a json then doesn't need string around it
+      json.decode(payload) as Map<String, dynamic>;
       return '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": $payload, "to": "$to"}';
     } catch (e) {
       return '{"host":"$host", "port": "$port", "name": "$name", "title": "$title", "payload": "$payload", "to": "$to"}';
@@ -83,7 +83,7 @@ Future<HttpResponse> _responseHandler(
   try {
     jsonFormat = json.decode(content);
   } catch (e) {
-    print('Json not decoded: $e');
+    debugPrint('Json not decoded: $e');
   }
   log.push(jsonFormat);
   request.response.statusCode = HttpStatus.ok;

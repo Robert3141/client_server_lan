@@ -1,3 +1,7 @@
+## [3.0.1] - 24/02/2021
+
+* Other dataypes were not able to be sent through. However,now fixed
+
 ## [3.0.0] - 23/02/2021
 
 * On error function added for easier error handling
