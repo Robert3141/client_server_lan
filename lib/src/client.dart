@@ -5,7 +5,7 @@ part of 'basenode.dart';
 /// Additional work needs to be added in order to facilitate data forwarding.
 class ClientNode extends _BaseClientNode {
   ClientNode({
-    @required this.name,
+    required this.name,
     this.port = 8084,
     this.verbose = false,
     this.onDispose,
@@ -68,7 +68,7 @@ abstract class _BaseClientNode with _BaseNode {
   ConnectedClientNode _server;
 
   /// Provides information about the server if one is connected
-  ConnectedClientNode get serverDetails => _server;
+  ConnectedClientNode? get serverDetails => _server;
 
   Future<void> discoverServerNode() async => _broadcastCheckServerExistance();
 
@@ -138,7 +138,7 @@ abstract class _BaseClientNode with _BaseNode {
   }
 
   @override
-  Future<void> sendData(Object data, [String title = 'no name', String to]) {
+  Future<void>? sendData(Object data, [String title = 'no name', String? to]) {
     if (serverDetails == null) {
       onError(_e.serverError);
       return null;

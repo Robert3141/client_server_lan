@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get_ip/get_ip.dart';
 import 'package:isohttpd/isohttpd.dart';
-import 'package:meta/meta.dart';
 import 'package:emodebug/emodebug.dart';
 
 part 'server.dart';
@@ -221,11 +220,11 @@ abstract class _BaseNode {
   }
 
   /// The method to transmit to another Node on the network. The data is transferred over LAN.
-  Future<void> sendData(String data, [String title = 'no name', String to]) =>
+  Future<void>? sendData(Object data, [String title = 'no name', String? to]) =>
       _sendDataDynamic(data, title, to);
 
   Future<void> _sendDataDynamic(dynamic data,
-      [String title = 'no name', String to]) async {
+      [String title = 'no name', String? to]) async {
     if (to == null) throw _e.addressNull;
     if (data == null) throw _e.dataNull;
     if (_s.titles.contains(title)) throw _e.titleInternal;
@@ -250,11 +249,11 @@ abstract class _BaseNode {
     }
   }
 
-  Future<Response> _sendData(
-      String title, String data, String to, String endPoint) async {
+  Future<Response>? _sendData(
+      String title, String? data, String to, String endPoint) async {
     if (to == null) throw _e.addressNull;
     final uri = 'http://$to$endPoint';
-    Response response;
+    Response? response;
     final packet = DataPacket(
         host: host, port: port, name: name, title: title, payload: data);
 
@@ -334,7 +333,7 @@ abstract class _BaseNode {
       }
       //send the data
       final uri = 'http://${data.to}$_suffix';
-      Response response;
+      Response? response;
       final packet = data;
       try {
         response = await _dio.post<dynamic>(uri, data: packet.encodeToString());
